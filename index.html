@@ -190,7 +190,7 @@
     #settingsOverlay,#listOverlay,#signinOverlay,#groupOverlay,#optionsOverlay,#lineupOverlay{background:#000c}.lineup{width:min(760px,94vw)}.lineup-list{max-height:62vh;overflow:auto;margin:8px 0 14px;display:flex;flex-direction:column;gap:6px}
     .lineup-row{display:flex;align-items:center;gap:12px;background:#0009;border:2px solid;border-color:#070b40 #8b98ff #8b98ff #070b40;padding:6px 8px}
     .lineup-row img.avatar{object-fit:contain;padding:4px}.lineup-row img,.lineup-blank{width:112px;aspect-ratio:16/9;object-fit:cover;flex:none;background:#000;display:grid;place-items:center;color:var(--osd)}
-    .lineup-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.lineup-info strong{text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lineup-actions{display:flex;flex-direction:column;gap:5px;flex:none}.lineup-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.lineup-info strong{text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .lineup-info span{font-family:'VT323',monospace;font-size:18px;color:var(--cyan);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .lineup-info small{font-size:13px;color:#b9c2ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.options{width:min(420px,90vw)}.options-list{display:flex;flex-direction:column;gap:8px;margin:10px 0 14px}.options-list .button{text-align:left;font-size:17px;padding:9px 14px}
     .button:focus-visible,.pill:focus-visible,.search:focus-visible,.options-list .button:focus{outline:3px solid var(--gold);outline-offset:2px}.group-list{max-height:34vh;overflow:auto;background:#0009;border:2px solid;border-color:#070b40 #8b98ff #8b98ff #070b40;padding:4px 10px;margin-top:6px}.group-list .more-creators{width:100%;margin:8px 0}.group-item{margin:6px 0!important;text-transform:none!important;font-weight:500!important}.group-item small{margin-left:auto;font-family:'VT323',monospace;font-size:17px;color:var(--cyan)}.signin{text-align:center}.signin-url{font-size:clamp(30px,3vw,48px);color:var(--cyan);text-shadow:2px 2px 0 #000}.signin-code{font-size:clamp(56px,7vw,110px);letter-spacing:.12em;color:var(--gold);text-shadow:4px 4px 0 #000;margin:4px 0 10px}#signinStatus{font-size:22px;color:var(--osd);min-height:1.2em}.settings .search{max-width:none;width:100%}#listStatus{font-size:21px;color:var(--osd);min-height:1.2em}
@@ -248,7 +248,7 @@
       <p id="detailNext">Your creator lineup will fill this guide after Google sign-in.</p>
       <p id="detailSeen" class="preview-status"></p>
       <p class="preview-status" id="previewStatus">Hover over a channel for a muted preview.</p>
-      <div class="detail-actions"><button class="button primary" id="tuneButton" type="button">Tune in</button><button class="button" id="seenButton" type="button">Mark seen today</button><button class="button" id="favoriteButton" type="button">☆ Favorite</button><button class="button" id="recButton" type="button" hidden>○ Record</button><button class="button" id="newListButton" type="button">＋ List</button><button class="button" id="lineupButton" type="button" hidden>Who's on this channel</button><button class="button" id="groupButton" type="button">＋ Channel</button><button class="button" id="hideGroupButton" type="button" hidden>Delete channel</button><button class="button" id="deleteListButton" type="button" hidden>Delete list</button><button class="button" id="stopPreviewButton" type="button" hidden>Stop preview</button></div>
+      <div class="detail-actions"><button class="button primary" id="tuneButton" type="button">Tune in</button><button class="button" id="seenButton" type="button">Mark seen today</button><button class="button" id="favoriteButton" type="button">☆ Favorite</button><button class="button" id="recButton" type="button" hidden>○ Record</button><button class="button" id="newListButton" type="button">＋ List</button><button class="button" id="lineupButton" type="button" hidden>Who's on this channel</button><button class="button" id="groupButton" type="button">＋ Channel</button><button class="button" id="subscribeButton" type="button" hidden>＋ Subscribe</button><button class="button" id="hideGroupButton" type="button" hidden>Delete channel</button><button class="button" id="deleteListButton" type="button" hidden>Delete list</button><button class="button" id="stopPreviewButton" type="button" hidden>Stop preview</button></div>
       <div class="nearby-label">&lt;&lt; CHANNEL SURF &gt;&gt;</div>
       <div class="nearby" id="nearby" aria-label="Nearby channels"></div>
     </div>
@@ -646,8 +646,10 @@
     youtube:{store:'nostalgiavision-auth-v1',scope:'https://www.googleapis.com/auth/youtube.readonly',title:'Sign in with your phone',
       apply:t=>{state.token=t},done:()=>sync(),revoked:()=>{$('status').textContent='Sign-in was revoked · press Connect'}},
     sync:{store:'nostalgiavision-sync-auth-v1',scope:'https://www.googleapis.com/auth/drive.file',title:'Turn on household sync',
-      apply:t=>{syncToken=t},done:()=>cloudSync(),revoked:()=>{syncState={note:'Sync approval was removed: press "Turn on sync".',at:0,needsConsent:true};renderSyncStatus()}}};
-  let tvConfig=null,deviceFlow=null,syncToken=null;const renewTimers={};
+      apply:t=>{syncToken=t},done:()=>cloudSync(),revoked:()=>{syncState={note:'Sync approval was removed: press "Turn on sync".',at:0,needsConsent:true};renderSyncStatus()}},
+    manage:{store:'nostalgiavision-manage-auth-v1',scope:'https://www.googleapis.com/auth/youtube',title:'Allow subscribing from The Tube',
+      apply:t=>{manageToken=t},done:()=>{const p=pendingSubscribe;pendingSubscribe=null;if(p)subscribeTo(p.c,p.button)},revoked:()=>{manageToken=null}}};
+  let tvConfig=null,deviceFlow=null,syncToken=null,manageToken=null;const renewTimers={};
   const grantSaved=kind=>{try{return JSON.parse(localStorage.getItem(GRANTS[kind].store)||'null')}catch{return null}};
   const oauth=async(url,params)=>{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(params)});return {ok:r.ok,body:await r.json().catch(()=>({}))}};
   async function loadTvConfig(){try{const r=await fetch('config.json',{cache:'no-store'});const j=r.ok?await r.json():{};if(j.tvClientId&&j.tvClientSecret&&!/PASTE/.test(j.tvClientId+j.tvClientSecret))tvConfig=j}catch{}}
@@ -683,7 +685,7 @@
       if(deviceFlow===flow)$('signinStatus').textContent='That code expired. Close and try again for a new one.';
     }catch(e){if(deviceFlow===flow)$('signinStatus').textContent=`Sign-in failed: ${e.message}`}
   }
-  function forgetSignin(){for(const [kind,g] of Object.entries(GRANTS)){const saved=grantSaved(kind);if(saved?.grant)fetch('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token:saved.grant})}).catch(()=>{});try{localStorage.removeItem(g.store)}catch{}clearTimeout(renewTimers[kind])}syncToken=null}
+  function forgetSignin(){for(const [kind,g] of Object.entries(GRANTS)){const saved=grantSaved(kind);if(saved?.grant)fetch('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token:saved.grant})}).catch(()=>{});try{localStorage.removeItem(g.store)}catch{}clearTimeout(renewTimers[kind])}syncToken=null;manageToken=null}
   {const popupConnect=$('connect').onclick,baseDisconnect=$('disconnect').onclick;
     $('connect').onclick=()=>state.token?sync():tvConfig?tvSignIn():popupConnect();
     $('disconnect').onclick=()=>{const b=$('disconnect');if(b.textContent!=='Press again to sign out'){b.textContent='Press again to sign out';setTimeout(()=>{b.textContent='Disconnect'},4000);return}b.textContent='Disconnect';forgetSignin();baseDisconnect()};}
@@ -770,6 +772,7 @@
   function renderGroupBits(c){
     const b=$('groupButton'),h=$('hideGroupButton'),airing=c.discovery&&positionAt(c)?.video;
     b.hidden=!c.genre;b.textContent='Customize';$('lineupButton').hidden=!c.isGroup;
+    const sub=$('subscribeButton'),who=airing&&c.allMembers.find(m=>m.id===airing.creatorId);sub.hidden=!who||!tvConfig;sub.disabled=false;if(who)sub.textContent=subscribedAlready(who)?`✓ Subscribed to ${who.name}`:`＋ Subscribe to ${who.name}`;
     h.hidden=!(c.genre||airing);h.textContent=c.genre?'Hide channel':airing?`Not interested in ${airing.creator}`:'';
   }
   // Header buttons: new channel (starting from the selected creator, if any) and edit the selected channel
@@ -1057,16 +1060,42 @@
     $('lineupNote').textContent=`${members.length} creator${members.length===1?'':'s'}${members.length>ch.members.length?` · the ${ch.members.length} marked ▶ are on the schedule right now`:''}`;
     $('lineupList').innerHTML=members.map(c=>{
       const v=c.videos?.[0],thumb=v?`<img src="https://i.ytimg.com/vi/${encodeURIComponent(v.id)}/mqdefault.jpg" alt="" loading="lazy">`:/^https:\/\/yt\d*\.(ggpht|googleusercontent)\.com\//.test(c.thumb||'')?`<img class="avatar" src="${clean(c.thumb)}" alt="" loading="lazy">`:'<span class="lineup-blank">▶</span>',g=genreOf(c);
-      return `<div class="lineup-row" data-id="${clean(c.id)}">${thumb}<div class="lineup-info"><strong>${airing.has(c.id)?'▶ ':''}${clean(c.name)}</strong><span>${clean(whyOnChannel(ch,c))}${g?` · ${clean(genreName(g))}`:''}</span>${v?`<small>Latest: ${clean(v.title)}</small>`:''}</div>${ch.discovery?`<button class="button" type="button" data-hide="${clean(c.id)}">Not interested</button>`:''}</div>`;
+      return `<div class="lineup-row" data-id="${clean(c.id)}">${thumb}<div class="lineup-info"><strong>${airing.has(c.id)?'▶ ':''}${clean(c.name)}</strong><span>${clean(whyOnChannel(ch,c))}${g?` · ${clean(genreName(g))}`:''}</span>${v?`<small>Latest: ${clean(v.title)}</small>`:''}</div>${ch.discovery?`<div class="lineup-actions">${tvConfig?`<button class="button primary" type="button" data-sub="${clean(c.id)}">${subscribedAlready(c)?'✓ Subscribed':'＋ Subscribe'}</button>`:''}<button class="button" type="button" data-hide="${clean(c.id)}">Not interested</button></div>`:''}</div>`;
     }).join('')||'<p class="mono">Nobody here yet.</p>';
     $('lineupOverlay').hidden=false;($('lineupList').querySelector('button')||$('closeLineup')).focus();
   }
-  $('lineupList').onclick=e=>{const id=e.target.closest('[data-hide]')?.dataset.hide;if(!id)return;
+  $('lineupList').onclick=e=>{const subId=e.target.closest('[data-sub]')?.dataset.sub;if(subId){const ch=byId(state.selectedId);subscribeTo(ch?.allMembers.find(m=>m.id===subId),e.target.closest('[data-sub]'));return}
+    const id=e.target.closest('[data-hide]')?.dataset.hide;if(!id)return;
     state.discoverHidden=[...new Set([...(state.discoverHidden||[]),id])];delete state.printed[state.selectedId];persist();
     const row=e.target.closest('.lineup-row'),next=row.nextElementSibling?.querySelector('button')||row.previousElementSibling?.querySelector('button')||$('closeLineup');
     row.remove();next.focus();renderGuide()};
   $('lineupButton').onclick=openLineup;
   $('closeLineup').onclick=()=>{$('lineupOverlay').hidden=true;selectedRow()?.focus()};
+  // ── Subscribe from The Tube ─────────────────────────────────────────────────────────────────────────
+  // Subscribing needs YouTube's "manage" permission, which The Tube otherwise never asks for, so it's a third, optional
+  // approval: the first Subscribe on a device shows a code once, then it's instant. A new subscription moves the creator
+  // out of discovery and into the lineup like any other creator you follow.
+  let pendingSubscribe=null;
+  const subscribedAlready=c=>state.subs.some(s=>s.youtubeId===c.youtubeId);
+  async function subscribeTo(c,button){
+    if(!c?.youtubeId||!tvConfig)return;
+    if(subscribedAlready(c)){if(button)button.textContent='✓ Subscribed';return}
+    if(!manageToken&&!await renewGrant('manage')){pendingSubscribe={c,button};$('lineupOverlay').hidden=true;$('optionsOverlay').hidden=true;tvSignIn('manage');return}
+    if(button){button.disabled=true;button.textContent='Subscribing…'}
+    try{
+      const send=()=>fetch('https://www.googleapis.com/youtube/v3/subscriptions?part=snippet',{method:'POST',headers:{Authorization:`Bearer ${manageToken}`,'Content-Type':'application/json'},body:JSON.stringify({snippet:{resourceId:{kind:'youtube#channel',channelId:c.youtubeId}}})});
+      let r=await send();if(r.status===401&&await renewGrant('manage'))r=await send();
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok&&j.error?.errors?.[0]?.reason!=='subscriptionDuplicate')throw new Error(j.error?.message||`YouTube ${r.status}`);
+      const {discovered,mentions,vouchedBy,...plain}=c;
+      state.subs.push({...plain,videos:c.videos||[],loaded:!!c.loaded,loadedAt:c.loadedAt});saveLineup();rankCache=null;
+      for(const k of Object.keys(state.printed))if(k.startsWith('disc-'))delete state.printed[k];persist();renderGuide();
+      if(button)button.textContent='✓ Subscribed';
+    }catch(e){if(button){button.disabled=false;button.textContent='Try again'}$('status').textContent=`Couldn't subscribe: ${e.message}`}
+  }
+  // the creator on right now in a discovery channel, for the info panel / → Options button
+  const airingCreatorOf=ch=>{const v=ch?.discovery&&positionAt(ch)?.video;return v?ch.allMembers.find(m=>m.id===v.creatorId):null};
+  $('subscribeButton').onclick=()=>subscribeTo(airingCreatorOf(byId(state.selectedId)),$('subscribeButton'));
   // ── Status light ─────────────────────────────────────────────────────────────────────────────────
   function updateStatusLight(){
     const t=$('status').textContent,light=$('statusLight');
