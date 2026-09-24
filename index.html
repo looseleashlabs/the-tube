@@ -742,6 +742,7 @@
   const loadQueue=[];let loadActive=0;
   function ensureFresh(c,maxAge){
     if(!state.token||!c?.uploadsPlaylist||c.loading||c.queued||quotaPaused())return;
+    if(document.hidden&&c.videos?.length)return; // screens that are off or in the background don't spend the daily budget
     if(c.loaded&&Date.now()-(c.loadedAt||0)<maxAge)return;if(c.error&&Date.now()-(c.errorAt||0)<5*MINUTE)return;
     c.queued=true;loadQueue.push(c);pumpLoads();
   }
