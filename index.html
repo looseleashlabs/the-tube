@@ -354,7 +354,7 @@
     return parts;
   }
   function stopPreview(){clearTimeout(previewTimer);previewTimer=null;previewId=null;previewRequest=null;previewReady=false;previewVideoId=null;previewPlayer?.destroy?.();previewPlayer=null;$('previewFrame')?.remove();$('poster').classList.remove('previewing');$('previewStatus').textContent='Hover over a channel for a muted preview.';$('stopPreviewButton').hidden=true}
-  function wrapPreview(){const frame=$('previewFrame');if(!window.YT?.Player||previewPlayer||!frame)return;previewPlayer=new YT.Player('previewFrame',{events:{onReady:e=>{if(!$('previewFrame')||!previewId)return;previewReady=true;e.target.mute();const request=previewRequest;if(!request)return;if(previewVideoId!==request.videoId){previewVideoId=request.videoId;e.target.loadVideoById({videoId:request.videoId,startSeconds:request.startSeconds})}else e.target.playVideo()},onError:()=>{$('previewStatus').textContent='This channel cannot preview here. Choose another channel.';stopPreview()}}})}
+  function wrapPreview(){const frame=$('previewFrame');if(!window.YT?.Player||previewPlayer||!frame)return;previewPlayer=new YT.Player('previewFrame',{events:{onStateChange:e=>{if(e.data===1)noCaptions(e.target)},onReady:e=>{if(!$('previewFrame')||!previewId)return;previewReady=true;e.target.mute();const request=previewRequest;if(!request)return;if(previewVideoId!==request.videoId){previewVideoId=request.videoId;e.target.loadVideoById({videoId:request.videoId,startSeconds:request.startSeconds})}else e.target.playVideo()},onError:()=>{$('previewStatus').textContent='This channel cannot preview here. Choose another channel.';stopPreview()}}})}
   async function beginPreview(id){let c=byId(id);if(!c)return;if(!special(c.id)&&!c.loaded&&c.uploadsPlaylist)await loadVideos(c);if(previewId!==id||!$('watchOverlay').hidden||!$('settingsOverlay').hidden)return;c=byId(id);const p=positionAt(c);if(!p){$('previewStatus').textContent='No playable preview for this channel yet.';return}previewRequest={videoId:p.video.id,startSeconds:Math.floor(p.offset)};let frame=$('previewFrame');if(frame){frame.title=`Muted preview: ${p.video.title}`;if(previewPlayer&&previewReady){if(previewVideoId!==p.video.id){previewVideoId=p.video.id;previewPlayer.mute();previewPlayer.loadVideoById(previewRequest)}else previewPlayer.playVideo()}else if(!previewPlayer){previewVideoId=p.video.id;frame.src=`https://www.youtube.com/embed/${encodeURIComponent(p.video.id)}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(location.origin)}&start=${Math.floor(p.offset)}`;wrapPreview()}}else{frame=document.createElement('iframe');frame.id='previewFrame';frame.className='preview-frame';frame.title=`Muted preview: ${p.video.title}`;frame.src=`https://www.youtube.com/embed/${encodeURIComponent(p.video.id)}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(location.origin)}&start=${Math.floor(p.offset)}`;frame.allow='autoplay; encrypted-media; picture-in-picture; web-share';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';previewVideoId=p.video.id;$('poster').append(frame);wrapPreview()}$('poster').classList.add('previewing');$('previewStatus').textContent='Muted preview · nearby channels are ready to select.';$('stopPreviewButton').hidden=false}
   function queuePreview(id){if(!$('watchOverlay').hidden||!$('settingsOverlay').hidden)return;if(previewId===id&&(previewTimer||previewRequest))return;clearTimeout(previewTimer);previewId=id;state.selectedId=id;renderDetails();document.querySelectorAll('.guide-row').forEach(row=>row.classList.toggle('selected',row.dataset.id===id));previewTimer=setTimeout(()=>{previewTimer=null;beginPreview(id)},180)}
   function renderNearby(){const items=visible(),at=items.findIndex(c=>c.id===state.selectedId);if(at<0){$('nearby').replaceChildren();return}const nearby=[...new Set([-2,-1,0,1,2].map(offset=>items[(at+offset+items.length)%items.length]?.id))].map(id=>items.find(c=>c.id===id)).filter(Boolean);const nearbyHtml=nearby.map(c=>{const p=positionAt(c);return `<button type="button" class="${c.id===state.selectedId?'active':''}" data-id="${clean(c.id)}" aria-label="Preview ${clean(c.name)}" title="${clean(p?.video.title||c.name)}">${p?.video.id?`<img src="https://i.ytimg.com/vi/${encodeURIComponent(p.video.id)}/mqdefault.jpg" alt="" loading="eager" decoding="async">`:''}<span><small>CH ${channelNo(c)}</small>${clean(c.name)}</span></button>`}).join('');if(nearbyHtml!==lastNearby){lastNearby=nearbyHtml;$('nearby').innerHTML=nearbyHtml}}
@@ -454,7 +454,7 @@
   // out the box takes the decoder back from whichever player has it (the show on air pauses every few seconds). So on
   // Android only two players exist, and the next program is "cued" (thumbnail + position, no decoder) instead of pre-rolled.
   const LITE=/Android/i.test(navigator.userAgent);
-  const activeDecks=()=>decks.slice(0,!LITE&&state.preloadNeighbors?DECKS:2);
+  const activeDecks=()=>decks.slice(0,state.preloadNeighbors?DECKS:2);
   const emit=(name,detail)=>document.dispatchEvent(new CustomEvent(name,{detail}));
   function deckPlayer(d){
     if(d.ready)return d.ready;
@@ -466,12 +466,13 @@
     return d.ready;
   }
   const park=d=>{d.player.pauseVideo();d.mode='standby';d.primed=true};
+  const noCaptions=p=>{try{p?.unloadModule?.('captions');p?.unloadModule?.('cc')}catch{}};
   function deckState(d,s){
     const P=YT.PlayerState;window.nvLog?.(`deck${d.i} ${d.mode} → ${s} q=${d.player?.getPlaybackQuality?.()}`);
     if(d.mode==='preload'&&s===P.PLAYING){park(d);if(d.role==='next')d.player.seekTo(d.startAt,true);return}
-    if(d.mode==='arming'&&s===P.PLAYING)return goOnAir(d);
+    if(d.mode==='arming'&&s===P.PLAYING){noCaptions(d.player);return goOnAir(d)}
     if(d.mode!=='air')return;
-    if(s===P.PLAYING){state.playerErrors=0;startWatchClock(d.videoId)}else if(s===P.ENDED)finishProgram();else pauseWatchClock();
+    if(s===P.PLAYING){state.playerErrors=0;startWatchClock(d.videoId);noCaptions(d.player)}else if(s===P.ENDED)finishProgram();else pauseWatchClock();
   }
   function deckError(d){window.nvLog?.(`deck${d.i} ERROR/give-up ${d.mode}`);
     if(d.videoId)state.unplayable.add(d.videoId);
@@ -489,14 +490,14 @@
     // channel loads into the player that's already on air, behind the static, unless a spare already holds it.
     const ready=pool.find(x=>x.primed&&x.videoId===p.video.id);
     const d=ready||(LITE&&onAir!==null&&decks[onAir].player?decks[onAir]:null)||pool.find(x=>x.mode==='idle')||pool.find(x=>x.role===sacrifice)||pool.find(x=>x.mode!=='arming')||pool[0];
-    const primed=d.primed&&d.videoId===p.video.id,seq=++tuneSeq;d.seq=seq;
+    const primed=d.primed&&d.videoId===p.video.id,seq=++tuneSeq;d.seq=seq;d.wasPrimed=primed;
     if(kind==='channel'&&onAir!==null)decks[onAir].player?.mute();
     emit('nv:tuning',{kind,primed});
     await deckPlayer(d);if($('watchOverlay').hidden||d.seq!==seq)return;
     clearTimeout(d.armTimer);clearTimeout(preloadTimer);d.player.mute();d.mode='arming';d.role=null;d.armedAt=Date.now();
     if(LITE){clearTimeout(stepUpTimer);quickStart=true;fitDecks()}
     if(LITE)for(const o of decks)if(o!==d&&o.i!==onAir&&o.player&&(o.mode==='arming'||o.mode==='preload')){clearTimeout(o.armTimer);o.mode='idle';o.primed=false;o.videoId=null;o.role=null;o.player.stopVideo()}
-    if(primed){if(Math.abs((d.player.getCurrentTime?.()||0)-p.offset)>60)d.player.seekTo(p.offset,true);d.player.playVideo()}
+    if(primed){if(Math.abs((d.player.getCurrentTime?.()||d.startAt||0)-p.offset)>(LITE?8:60))d.player.seekTo(p.offset,true);d.player.playVideo()}
     else{d.primed=false;d.videoId=p.video.id;d.player.loadVideoById({videoId:p.video.id,startSeconds:Math.floor(p.offset)})}
     // YouTube won't start while the page is hidden (screensaver, app in background), so only give up on a video after
     // 12 seconds of it actually being on screen and still not playing.
@@ -513,7 +514,7 @@
       // the channel you just left is the likeliest one to come back to, so keep it parked unless it had finished
       if(old.mode==='ending'||LITE){old.mode='idle';old.primed=false;old.videoId=null;old.role=null;old.player?.stopVideo()}else{park(old);old.role='back'}
     }
-    resetWatchClock();doneMarked=null;state.playerErrors=0;startWatchClock(d.videoId);emit('nv:onair');window.nvLog?.(`ON AIR after ${((Date.now()-(d.armedAt||Date.now()))/1000).toFixed(1)}s`);
+    resetWatchClock();doneMarked=null;state.playerErrors=0;startWatchClock(d.videoId);emit('nv:onair');window.nvLog?.(`ON AIR (${d.wasPrimed?'cued':'cold'}) after ${((Date.now()-(d.armedAt||Date.now()))/1000).toFixed(1)}s`);
     if(LITE){clearTimeout(stepUpTimer);stepUpTimer=setTimeout(()=>{quickStart=false;fitDecks();window.nvLog?.('stepped up to '+state.quality)},4000)}
     clearTimeout(preloadTimer);preloadTimer=setTimeout(preloadAll,2500);
     clearInterval(refreshTimer);refreshTimer=setInterval(preloadAll,NEIGHBOR_REFRESH);
@@ -531,10 +532,10 @@
   function preloadAll(){
     if(onAir===null||decks[onAir].mode!=='air'||$('watchOverlay').hidden)return;
     const want=[],next=upcoming();if(next)want.push({role:'next',p:next});
-    if(state.preloadNeighbors&&!LITE)for(const [role,dir] of [['up',1],['down',-1]]){const c=neighbor(dir,true),p=c&&positionAt(c);if(p&&!want.some(w=>w.p.video.id===p.video.id))want.push({role,p,channelId:c.id})}
+    if(state.preloadNeighbors)for(const [role,dir] of [['up',1],['down',-1]]){const c=neighbor(dir,true),p=c&&positionAt(c);if(p&&!want.some(w=>w.p.video.id===p.video.id))want.push({role,p,channelId:c.id})}
     const pool=activeDecks().filter(d=>d.i!==onAir&&d.mode!=='arming'),claimed=new Set();
     for(const w of want){const d=pool.find(x=>!claimed.has(x)&&(x.mode==='standby'||x.mode==='preload')&&x.videoId===w.p.video.id);if(!d)continue;claimed.add(d);w.deck=d;d.role=w.role;
-      if(w.role!=='next'&&d.mode==='standby'&&Math.abs((d.player.getCurrentTime?.()||0)-w.p.offset)>5)d.player.seekTo(w.p.offset,true)} // stay near live; paused decks stay paused
+      if(w.role!=='next'&&d.mode==='standby'&&!LITE&&Math.abs((d.player.getCurrentTime?.()||0)-w.p.offset)>5)d.player.seekTo(w.p.offset,true)} // stay near live; paused decks stay paused
     let delay=0;for(const w of want){if(w.deck)continue;const d=pool.find(x=>!claimed.has(x));if(!d)break;claimed.add(d);d.role=w.role;setTimeout(()=>preroll(d,w.p,w.role),delay);delay+=1500}
   }
   function preroll(d,p,role){deckPlayer(d).then(()=>{if(d.mode==='arming'||d.mode==='air'||d.role!==role)return;d.primed=false;d.videoId=p.video.id;d.startAt=Math.floor(p.offset);d.player.mute();if(LITE){d.player.cueVideoById({videoId:p.video.id,startSeconds:d.startAt});d.mode='standby';d.primed=true;return}d.mode='preload';d.player.loadVideoById({videoId:p.video.id,startSeconds:d.startAt})})}
