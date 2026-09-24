@@ -1300,7 +1300,7 @@
   // The player announces tuning / on-air: channel changes hold the static until the new channel is really playing,
   // program changes that weren't pre-rolled get a "stay tuned" card instead of YouTube's loading spinner.
   let cutPending=false;
-  document.addEventListener('nv:tuning',e=>{if(e.detail?.behind){cutPending=true;clearTimeout(osdTimer);$('osd').classList.add('show');showBanner();clearTimeout(bannerTimer);tuner(true);return}if(e.detail?.kind==='channel'){holdStatic=true;$('videoBox').classList.add('tuning');zap()}else if(!e.detail?.primed){clearTimeout(bumperTimer);bumperTimer=setTimeout(()=>{$('videoBox').classList.add('tuning');$('bumperTitle').textContent=$('watchTitle').textContent;$('bumper').classList.add('show')},200)}});
+  document.addEventListener('nv:tuning',e=>{if(e.detail?.behind){cutPending=true;clearTimeout(osdTimer);$('osd').classList.add('show');showBanner();clearTimeout(bannerTimer);clearTimeout(bumperTimer);$('bumper').classList.remove('show');tuner(true);return}if(e.detail?.kind==='channel'){holdStatic=true;$('videoBox').classList.add('tuning');zap()}else if(!e.detail?.primed){clearTimeout(bumperTimer);bumperTimer=setTimeout(()=>{$('videoBox').classList.add('tuning');$('bumperTitle').textContent=$('watchTitle').textContent;$('bumper').classList.add('show')},200)}});
   document.addEventListener('nv:onair',()=>{holdStatic=false;staticUntil=0;$('videoBox').classList.remove('tuning');clearTimeout(bumperTimer);$('bumper').classList.remove('show');if(cutPending){cutPending=false;tuner(false);zap();showBanner();clearTimeout(osdTimer);osdTimer=setTimeout(()=>$('osd').classList.remove('show'),3000)}});
 
   // OSD + info banner, like a cable box
