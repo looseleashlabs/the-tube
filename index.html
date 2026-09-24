@@ -551,7 +551,7 @@
     }
     resetWatchClock();doneMarked=null;state.playerErrors=0;startWatchClock(d.videoId);emit('nv:onair');window.nvLog?.(`ON AIR (${d.wasPrimed?'cued':'cold'}) after ${((Date.now()-(d.armedAt||Date.now()))/1000).toFixed(1)}s`);
     if(LITE){clearTimeout(stepUpTimer);stepUpTimer=setTimeout(()=>{quickStart=false;fitDecks();window.nvLog?.('stepped up to '+state.quality)},4000)}
-    clearTimeout(preloadTimer);preloadTimer=setTimeout(preloadAll,2500);
+    clearTimeout(preloadTimer);preloadTimer=setTimeout(preloadAll,LITE?2500:400);
     clearInterval(refreshTimer);refreshTimer=setInterval(preloadAll,NEIGHBOR_REFRESH);
     clearInterval(airPoll);airPoll=setInterval(pollAir,500);
   }
@@ -571,7 +571,7 @@
     const pool=activeDecks().filter(d=>d.i!==onAir&&d.mode!=='arming'),claimed=new Set();
     for(const w of want){const d=pool.find(x=>!claimed.has(x)&&(x.mode==='standby'||x.mode==='preload')&&x.videoId===w.p.video.id);if(!d)continue;claimed.add(d);w.deck=d;d.role=w.role;
       if(w.role!=='next'&&d.mode==='standby'&&!LITE&&Math.abs((d.player.getCurrentTime?.()||0)-w.p.offset)>5)d.player.seekTo(w.p.offset,true)} // stay near live; paused decks stay paused
-    let delay=0;for(const w of want){if(w.deck)continue;const d=pool.find(x=>!claimed.has(x));if(!d)break;claimed.add(d);d.role=w.role;setTimeout(()=>preroll(d,w.p,w.role),delay);delay+=1500}
+    let delay=0;for(const w of want){if(w.deck)continue;const d=pool.find(x=>!claimed.has(x));if(!d)break;claimed.add(d);d.role=w.role;setTimeout(()=>preroll(d,w.p,w.role),delay);delay+=LITE?1500:350}
   }
   function preroll(d,p,role){deckPlayer(d).then(()=>{if(d.mode==='arming'||d.mode==='air'||d.role!==role)return;d.primed=false;d.videoId=p.video.id;d.startAt=Math.floor(p.offset);d.player.mute();if(LITE){d.player.cueVideoById({videoId:p.video.id,startSeconds:d.startAt});d.mode='standby';d.primed=true;return}d.mode='preload';d.player.loadVideoById({videoId:p.video.id,startSeconds:d.startAt})})}
   // What airs after the current program, without committing to it (used for pre-rolling and for advancing).
