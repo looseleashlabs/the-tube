@@ -454,7 +454,8 @@
   // out the box takes the decoder back from whichever player has it (the show on air pauses every few seconds). So on
   // Android only two players exist, and the next program is "cued" (thumbnail + position, no decoder) instead of pre-rolled.
   const LITE=/Android/i.test(navigator.userAgent);
-  const activeDecks=()=>decks.slice(0,state.preloadNeighbors?DECKS:2);
+  // (measured on the onn box: cueing neighbors on spare players was slower, 5-6s, than reloading the on-air player, 3-4s)
+  const activeDecks=()=>decks.slice(0,!LITE&&state.preloadNeighbors?DECKS:2);
   const emit=(name,detail)=>document.dispatchEvent(new CustomEvent(name,{detail}));
   function deckPlayer(d){
     if(d.ready)return d.ready;
@@ -532,7 +533,7 @@
   function preloadAll(){
     if(onAir===null||decks[onAir].mode!=='air'||$('watchOverlay').hidden)return;
     const want=[],next=upcoming();if(next)want.push({role:'next',p:next});
-    if(state.preloadNeighbors)for(const [role,dir] of [['up',1],['down',-1]]){const c=neighbor(dir,true),p=c&&positionAt(c);if(p&&!want.some(w=>w.p.video.id===p.video.id))want.push({role,p,channelId:c.id})}
+    if(state.preloadNeighbors&&!LITE)for(const [role,dir] of [['up',1],['down',-1]]){const c=neighbor(dir,true),p=c&&positionAt(c);if(p&&!want.some(w=>w.p.video.id===p.video.id))want.push({role,p,channelId:c.id})}
     const pool=activeDecks().filter(d=>d.i!==onAir&&d.mode!=='arming'),claimed=new Set();
     for(const w of want){const d=pool.find(x=>!claimed.has(x)&&(x.mode==='standby'||x.mode==='preload')&&x.videoId===w.p.video.id);if(!d)continue;claimed.add(d);w.deck=d;d.role=w.role;
       if(w.role!=='next'&&d.mode==='standby'&&!LITE&&Math.abs((d.player.getCurrentTime?.()||0)-w.p.offset)>5)d.player.seekTo(w.p.offset,true)} // stay near live; paused decks stay paused
