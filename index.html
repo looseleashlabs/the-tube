@@ -149,7 +149,8 @@
     #watchOverlay{background:radial-gradient(ellipse at 30% 25%,#2a36b8,#0b1150 55%,#03051c)}
     /* Squeeze-back: when the banner, channel number or browse strip appears, the show shrinks into the top-left corner
        (like cable squeezing the credits for a promo) so nothing is ever drawn over the YouTube player. */
-    #watchOverlay .video-box{transform-origin:0 0;transition:transform .35s ease,box-shadow .35s}
+    #watchOverlay .video-box{transform-origin:0 0;transition:transform .75s cubic-bezier(.45,0,.2,1),box-shadow .75s}
+    #watchOverlay .watch-panel.squeeze .video-box,#watchOverlay .watch-panel.browsing .video-box{transition:transform .55s cubic-bezier(.22,1,.36,1),box-shadow .55s}
     .watch-panel.squeeze .video-box{transform:translate(3vw,4vh) scale(.66);box-shadow:0 0 0 4px #000,10px 10px 0 6px #000a}
     .watch-panel.browsing .video-box{transform:translate(3vw,3vh) scale(.6);box-shadow:0 0 0 4px #000,10px 10px 0 6px #000a}
     /* while static or the stay-tuned card is up, the outgoing show is hidden rather than covered. The incoming player
@@ -171,7 +172,8 @@
     .bumper small{font-family:'VT323',monospace;font-size:clamp(22px,2.4vw,36px);color:var(--cyan);letter-spacing:.2em;text-transform:uppercase}
     .bumper strong{font-size:clamp(26px,3.4vw,52px);text-transform:uppercase;color:#fff;text-shadow:3px 3px 0 #000;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .banner{position:absolute;left:3vw;right:3vw;bottom:3vh;z-index:5;background:linear-gradient(180deg,#2331a8f2,#0d1455f2);border:3px solid;border-color:#8b98ff #070b40 #070b40 #8b98ff;box-shadow:6px 6px 0 #000a;padding:12px 16px;transform:translateY(0);transition:transform .35s,opacity .35s}
-    .banner.tucked{transform:translateY(140%);opacity:0}
+    .banner.tucked{transform:translateY(140%);opacity:0;transition:transform .45s ease-in,opacity .45s ease-in}
+.watch-panel.squeeze .banner:not(.tucked){transition:transform .5s cubic-bezier(.22,1,.36,1) .12s,opacity .4s .12s}
     .browse-bar{position:absolute;left:3vw;right:3vw;bottom:4vh;z-index:6;display:grid;grid-template-columns:1fr 1fr 1.35fr 1fr 1fr;gap:1.2vw;align-items:end;transform:translateY(130%);opacity:0;transition:transform .25s,opacity .25s;pointer-events:none}
     .watch-panel.browsing .browse-bar{transform:none;opacity:1}
     .watch-panel.browsing .banner{opacity:0;pointer-events:none}
@@ -1310,7 +1312,7 @@
     if($('watchOverlay').hidden||!$('settingsOverlay').hidden)return;
     if(e.key==='ArrowUp'||e.key==='ChannelUp'||e.key==='PageUp'){e.preventDefault();$('nextChannel').click()}
     else if(e.key==='ArrowDown'||e.key==='ChannelDown'||e.key==='PageDown'){e.preventDefault();$('prevChannel').click()}
-    else showBanner();
+    else if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')showBanner();
   });
 })();
 </script>
