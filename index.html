@@ -462,13 +462,13 @@
   }
   const park=d=>{d.player.pauseVideo();d.mode='standby';d.primed=true};
   function deckState(d,s){
-    const P=YT.PlayerState;
+    const P=YT.PlayerState;window.nvLog?.(`deck${d.i} ${d.mode} → ${s} q=${d.player?.getPlaybackQuality?.()}`);
     if(d.mode==='preload'&&s===P.PLAYING){park(d);if(d.role==='next')d.player.seekTo(d.startAt,true);return}
     if(d.mode==='arming'&&s===P.PLAYING)return goOnAir(d);
     if(d.mode!=='air')return;
     if(s===P.PLAYING){state.playerErrors=0;startWatchClock(d.videoId)}else if(s===P.ENDED)finishProgram();else pauseWatchClock();
   }
-  function deckError(d){
+  function deckError(d){window.nvLog?.(`deck${d.i} ERROR/give-up ${d.mode}`);
     if(d.videoId)state.unplayable.add(d.videoId);
     if(d.mode==='preload'||d.mode==='standby'){d.mode='idle';d.primed=false;d.videoId=null;d.role=null;return}
     if(d.mode!=='arming'&&d.mode!=='air')return;
