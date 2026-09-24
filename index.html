@@ -241,7 +241,7 @@
 #watchOverlay .banner{background:linear-gradient(180deg,#2331a8b8,#0d1455cc)}
 /* "Tuning in" card while a new channel loads behind the one you're leaving: a little set with rabbit ears */
 #tuner{position:absolute;left:50%;top:40%;z-index:6;transform:translate(-50%,-50%) scale(.9);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;display:grid;justify-items:center;gap:14px}
-#tuner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#tuner.show{opacity:1;transform:translate(-50%,-50%) scale(.6)}
 #tuner .set{position:relative;width:190px;height:140px;background:#5a3b22;border:5px solid #2b1a0e;border-radius:18px;box-shadow:8px 8px 0 #000a;padding:14px 50px 14px 14px}
 #tuner .set::after{content:'';position:absolute;right:14px;top:22px;width:24px;height:24px;border-radius:50%;background:linear-gradient(#2b1a0e,#2b1a0e) 50% 2px/3px 9px no-repeat,radial-gradient(circle at 40% 35%,#d9c08a,#7a5a2a);animation:knob 1.6s steps(6) infinite}
 #tuner .set::before{content:'';position:absolute;right:17px;top:62px;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#cdb27a,#6d5024)}
@@ -263,7 +263,7 @@
 .tv-mode .watch-controls .button{display:none}
 .tv-mode .remote-legend{display:block;font-family:'VT323',monospace;font-size:26px;color:#9fd;letter-spacing:.06em;white-space:nowrap}
 .tv-mode .remote-legend b{color:#f5d000;margin:0 4px 0 18px;font-weight:400}
-.tv-mode #tuner.show{transform:translate(-50%,-50%) scale(1.35)}
+.tv-mode #tuner.show{transform:translate(-50%,-50%) scale(.6)}
 </style>
 </head>
 <body>
