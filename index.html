@@ -531,7 +531,7 @@
   function finishProgram(){const d=decks[onAir];if(!d||d.mode!=='air')return;d.mode='ending';resetWatchClock();markSeen(d.videoId);markDone(d.videoId);advanceProgram()}
   // Decide what the spare decks should hold and pre-roll anything new, staggered so they don't fight for bandwidth.
   function preloadAll(){
-    if(onAir===null||decks[onAir].mode!=='air'||$('watchOverlay').hidden)return;
+    if(onAir===null||decks[onAir].mode!=='air'||$('watchOverlay').hidden||LITE)return; // TV box: everything loads into the on-air player
     const want=[],next=upcoming();if(next)want.push({role:'next',p:next});
     if(state.preloadNeighbors&&!LITE)for(const [role,dir] of [['up',1],['down',-1]]){const c=neighbor(dir,true),p=c&&positionAt(c);if(p&&!want.some(w=>w.p.video.id===p.video.id))want.push({role,p,channelId:c.id})}
     const pool=activeDecks().filter(d=>d.i!==onAir&&d.mode!=='arming'),claimed=new Set();
