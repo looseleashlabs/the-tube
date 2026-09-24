@@ -485,12 +485,13 @@
     if(kind==='channel'&&onAir!==null)decks[onAir].player?.mute();
     emit('nv:tuning',{kind,primed});
     await deckPlayer(d);if($('watchOverlay').hidden||d.seq!==seq)return;
-    clearTimeout(d.armTimer);clearTimeout(preloadTimer);d.player.mute();d.mode='arming';d.role=null;
+    clearTimeout(d.armTimer);clearTimeout(preloadTimer);d.player.mute();d.mode='arming';d.role=null;d.armedAt=Date.now();
+    if(LITE)for(const o of decks)if(o!==d&&o.i!==onAir&&o.player&&(o.mode==='arming'||o.mode==='preload')){clearTimeout(o.armTimer);o.mode='idle';o.primed=false;o.videoId=null;o.role=null;o.player.stopVideo()}
     if(primed){if(Math.abs((d.player.getCurrentTime?.()||0)-p.offset)>60)d.player.seekTo(p.offset,true);d.player.playVideo()}
     else{d.primed=false;d.videoId=p.video.id;d.player.loadVideoById({videoId:p.video.id,startSeconds:Math.floor(p.offset)})}
     // YouTube won't start while the page is hidden (screensaver, app in background), so only give up on a video after
     // 12 seconds of it actually being on screen and still not playing.
-    let waited=false;const giveUp=()=>{if(d.mode!=='arming')return;if(document.hidden){waited=true;d.armTimer=setTimeout(giveUp,2000);return}if(waited){waited=false;d.armTimer=setTimeout(giveUp,12000);return}deckError(d)};d.armTimer=setTimeout(giveUp,12000);
+    let waited=false;const giveUp=()=>{if(d.mode!=='arming')return;if(document.hidden){waited=true;d.armTimer=setTimeout(giveUp,2000);return}if(waited){waited=false;d.armTimer=setTimeout(giveUp,12000);return}deckError(d)};d.armTimer=setTimeout(giveUp,LITE?25000:12000);
   }
   function goOnAir(d){
     if(d.seq!==tuneSeq){park(d);return} // lost a fast-surf race; stays parked as a spare
@@ -503,7 +504,7 @@
       // the channel you just left is the likeliest one to come back to, so keep it parked unless it had finished
       if(old.mode==='ending'||LITE){old.mode='idle';old.primed=false;old.videoId=null;old.role=null;old.player?.stopVideo()}else{park(old);old.role='back'}
     }
-    resetWatchClock();doneMarked=null;state.playerErrors=0;startWatchClock(d.videoId);emit('nv:onair');
+    resetWatchClock();doneMarked=null;state.playerErrors=0;startWatchClock(d.videoId);emit('nv:onair');window.nvLog?.(`ON AIR after ${((Date.now()-(d.armedAt||Date.now()))/1000).toFixed(1)}s`);
     clearTimeout(preloadTimer);preloadTimer=setTimeout(preloadAll,2500);
     clearInterval(refreshTimer);refreshTimer=setInterval(preloadAll,NEIGHBOR_REFRESH);
     clearInterval(airPoll);airPoll=setInterval(pollAir,500);
