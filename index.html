@@ -442,8 +442,10 @@
   const DECKS=4,NEIGHBOR_REFRESH=45000;
   // YouTube no longer lets embeds pick a quality; it chooses one to fit the player's pixel size. So the players are
   // laid out at a full 1080p or 4K canvas and scaled down to the screen, which makes YouTube stream the sharp version.
-  const QUALITY_CANVAS={auto:null,'1080':[1920,1080],'2160':[3840,2160]};
-  function fitDecks(){const box=$('videoBox'),size=QUALITY_CANVAS[state.quality];box.classList.toggle('canvas',!!size);if(!size)return;const [w,h]=size,scale=Math.min(box.clientWidth/w,box.clientHeight/h)||1;box.style.setProperty('--cw',w+'px');box.style.setProperty('--ch',h+'px');box.style.setProperty('--cs',scale)}
+  const QUALITY_CANVAS={auto:null,'720':[1280,720],'1080':[1920,1080],'2160':[3840,2160]};
+  // On a TV box a channel starts on a small (quick) stream and steps up to the chosen picture once it's playing
+  let quickStart=false,stepUpTimer=null;
+  function fitDecks(){const box=$('videoBox'),size=QUALITY_CANVAS[quickStart&&state.quality!=='auto'?'720':state.quality];box.classList.toggle('canvas',!!size);if(!size)return;const [w,h]=size,scale=Math.min(box.clientWidth/w,box.clientHeight/h)||1;box.style.setProperty('--cw',w+'px');box.style.setProperty('--ch',h+'px');box.style.setProperty('--cs',scale)}
   new ResizeObserver(fitDecks).observe($('videoBox'));
   let ytResolve;const ytReady=new Promise(res=>ytResolve=res);if(window.YT?.Player)ytResolve();
   const decks=[...Array(DECKS)].map((_,i)=>({i,player:null,ready:null,shell:null,mode:'idle',role:null,videoId:null,startAt:0,primed:false,seq:0,armTimer:null}));
@@ -489,6 +491,7 @@
     emit('nv:tuning',{kind,primed});
     await deckPlayer(d);if($('watchOverlay').hidden||d.seq!==seq)return;
     clearTimeout(d.armTimer);clearTimeout(preloadTimer);d.player.mute();d.mode='arming';d.role=null;d.armedAt=Date.now();
+    if(LITE){clearTimeout(stepUpTimer);quickStart=true;fitDecks()}
     if(LITE)for(const o of decks)if(o!==d&&o.i!==onAir&&o.player&&(o.mode==='arming'||o.mode==='preload')){clearTimeout(o.armTimer);o.mode='idle';o.primed=false;o.videoId=null;o.role=null;o.player.stopVideo()}
     if(primed){if(Math.abs((d.player.getCurrentTime?.()||0)-p.offset)>60)d.player.seekTo(p.offset,true);d.player.playVideo()}
     else{d.primed=false;d.videoId=p.video.id;d.player.loadVideoById({videoId:p.video.id,startSeconds:Math.floor(p.offset)})}
@@ -508,6 +511,7 @@
       if(old.mode==='ending'||LITE){old.mode='idle';old.primed=false;old.videoId=null;old.role=null;old.player?.stopVideo()}else{park(old);old.role='back'}
     }
     resetWatchClock();doneMarked=null;state.playerErrors=0;startWatchClock(d.videoId);emit('nv:onair');window.nvLog?.(`ON AIR after ${((Date.now()-(d.armedAt||Date.now()))/1000).toFixed(1)}s`);
+    if(LITE){clearTimeout(stepUpTimer);stepUpTimer=setTimeout(()=>{quickStart=false;fitDecks();window.nvLog?.('stepped up to '+state.quality)},4000)}
     clearTimeout(preloadTimer);preloadTimer=setTimeout(preloadAll,2500);
     clearInterval(refreshTimer);refreshTimer=setInterval(preloadAll,NEIGHBOR_REFRESH);
     clearInterval(airPoll);airPoll=setInterval(pollAir,500);
