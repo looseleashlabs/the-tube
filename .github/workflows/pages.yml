@@ -30,7 +30,8 @@ jobs:
           TV_CLIENT_SECRET: ${{ secrets.TV_CLIENT_SECRET }}
         run: |
           mkdir -p _site
-          cp index.html _site/
+          cp index.html manifest.webmanifest icon-192.png icon-512.png _site/
+          cp toolbar-test.html _site/ 2>/dev/null || true
           jq -n --arg id "$TV_CLIENT_ID" --arg secret "$TV_CLIENT_SECRET" \
             '{tvClientId: $id, tvClientSecret: $secret}' > _site/config.json
       - uses: actions/configure-pages@v5
