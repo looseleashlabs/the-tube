@@ -1280,7 +1280,7 @@
   // ?debug on the address shows remote keys and Back handling on screen (for testing on the TV)
   if(/[?&]debug/.test(location.search)){const pre=document.createElement('pre');pre.style.cssText='position:fixed;left:8px;top:8px;z-index:999;margin:0;padding:6px;background:#000c;color:#0f0;font:16px monospace;pointer-events:none;max-width:60vw;white-space:pre-wrap';document.body.append(pre);const lines=[];const log=t=>{lines.push(new Date().toLocaleTimeString()+' '+t);pre.textContent=lines.slice(-14).join('\n')};
     addEventListener('keydown',e=>log('key '+e.key+' on '+(document.activeElement?.id||document.activeElement?.tagName)),true);addEventListener('popstate',()=>log('popstate'),true);
-    document.addEventListener('fullscreenchange',()=>log('fullscreen '+!!document.fullscreenElement+' watch '+!$('watchOverlay').hidden),true);addEventListener('blur',()=>log('window blur (iframe focus)'));window.nvLog=log}
+    document.addEventListener('fullscreenchange',()=>log('fullscreen '+!!document.fullscreenElement+' watch '+!$('watchOverlay').hidden),true);addEventListener('blur',()=>log('window blur (iframe focus)'));addEventListener('error',e=>log('ERROR '+e.message+' @'+e.lineno+':'+e.colno));addEventListener('unhandledrejection',e=>log('REJECT '+(e.reason?.message||e.reason)));document.addEventListener('nv:tuning',e=>log('tuning '+JSON.stringify(e.detail)));document.addEventListener('nv:onair',()=>log('onair'));window.nvLog=log}
 
   // Remote: CH up/down surf, any other key wakes the banner
   document.addEventListener('keydown',e=>{
