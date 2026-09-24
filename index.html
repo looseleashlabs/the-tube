@@ -44,6 +44,13 @@
     .header-right{display:flex;align-items:center;gap:18px}
     .header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
     .status{font-size:20px;color:var(--gold);min-width:120px;text-align:right}
+    .status-light{width:16px;height:16px;border-radius:50%;flex:none;border:2px solid #000;box-shadow:0 0 0 2px #fff3}
+    .status-light.ok{background:var(--osd);box-shadow:0 0 10px var(--osd),0 0 0 2px #fff3}
+    .status-light.busy{background:var(--gold);animation:blink 1s steps(1) infinite}
+    .status-light.off,.status-light.err{background:var(--red);box-shadow:0 0 10px var(--red),0 0 0 2px #fff3}
+    @keyframes blink{50%{opacity:.35}}
+    .status.quiet{display:none}
+    .toolbar-note{display:none!important}
     .clock{font-family:'VT323',monospace;font-size:clamp(40px,4vw,64px);line-height:.8;color:var(--gold);text-shadow:3px 3px 0 #000;background:#000a;border:2px solid #fff3;padding:6px 12px 2px}
 
     /* ── chunky cable-box buttons ──────────────────────────── */
@@ -222,7 +229,7 @@
   <header>
     <div class="logo"><div class="stripes" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div><h1><span class="n">The </span><strong>Tube</strong></h1><p class="tagline">Your creators · 24 hours · Channel 3</p></div></div>
     <div class="header-right">
-      <div class="header-actions"><button class="button primary" id="connect" type="button">Connect YouTube</button><button class="button" id="disconnect" type="button" hidden>Disconnect</button><button class="button" id="settingsButton" type="button">Setup</button><span class="status mono" id="status" role="status">Sample channels</span></div>
+      <div class="header-actions"><button class="button primary" id="connect" type="button">Connect YouTube</button><button class="button" id="newChannelTop" type="button">＋ Channel</button><button class="button" id="editChannelTop" type="button">Edit channel</button><button class="button" id="settingsButton" type="button">Setup</button><span class="status-light off" id="statusLight" title="Not connected"></span><span class="status mono quiet" id="status" role="status">Sample channels</span></div>
       <div class="clock" id="clock" aria-hidden="true">--:--</div>
     </div>
   </header>
@@ -259,9 +266,9 @@
 </div></div>
 <div class="overlay" id="signinOverlay" hidden><div class="settings signin" role="dialog" aria-modal="true" aria-labelledby="signinTitle"><h2 id="signinTitle">Sign in with your phone</h2><p>On your phone or computer, go to</p><div class="signin-url mono" id="signinUrl">google.com/device</div><p>and enter this code:</p><div class="signin-code mono" id="signinCode">· · · ·</div><p class="mono" id="signinStatus" role="status"></p><button class="button" id="cancelSignin" type="button">Cancel</button></div></div>
 <div class="overlay" id="optionsOverlay" hidden><div class="settings options" role="dialog" aria-modal="true" aria-labelledby="optionsTitle"><h2 id="optionsTitle">Options</h2><div class="options-list" id="optionsList"></div><button class="button" id="closeOptions" type="button">Close</button></div></div>
-<div class="overlay" id="groupOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="groupTitle"><h2 id="groupTitle">Creator channel</h2><label for="groupPick">Channel</label><select id="groupPick"></select><label for="groupName">Name</label><input class="search" id="groupName" placeholder="TECH NIGHT_" autocomplete="off"><label for="groupSearch">Creators · <span id="groupCount">0 picked</span></label><input class="search" id="groupSearch" placeholder="FILTER_" autocomplete="off"><div class="group-list" id="groupList"></div><p class="mono" id="groupStatus" role="status"></p><div class="detail-actions"><button class="button primary" id="saveGroup" type="button">Make channel</button><button class="button" id="cancelGroup" type="button">Cancel</button></div></div></div>
+<div class="overlay" id="groupOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="groupTitle"><h2 id="groupTitle">Creator channel</h2><label for="groupPick">Channel</label><select id="groupPick"></select><label for="groupName">Name</label><input class="search" id="groupName" placeholder="TECH NIGHT_" autocomplete="off"><label for="groupSearch">Creators · <span id="groupCount">0 picked</span></label><input class="search" id="groupSearch" placeholder="FILTER_" autocomplete="off"><div class="group-list" id="groupList"></div><p class="mono" id="groupStatus" role="status"></p><div class="detail-actions"><button class="button primary" id="saveGroup" type="button">Make channel</button><button class="button" id="cancelGroup" type="button">Cancel</button><button class="button" id="deleteGroup" type="button" hidden>Delete channel</button></div></div></div>
 <div class="overlay" id="listOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="listTitle"><h2 id="listTitle">New list channel</h2><p>Everything a creator posted on a day (or a stretch of days) that you haven't finished yet. Each video drops off once you've watched 90% of it here.</p><label for="listCreator">Creator</label><input class="search" id="listCreator" list="creatorOptions" placeholder="START TYPING A NAME_" autocomplete="off"><datalist id="creatorOptions"></datalist><label class="check"><input type="checkbox" id="listAuto"> Keep recording new uploads</label><div id="autoOpts" hidden><label for="listKeep">Erase each video after</label><select id="listKeep"><option value="24">24 hours</option><option value="72">3 days</option><option value="168">7 days</option><option value="336">14 days</option></select></div><div id="dayOpts"><label for="listFrom">Posted on</label><input class="search" type="date" id="listFrom"><label for="listTo">Through (optional)</label><input class="search" type="date" id="listTo"></div><label class="check"><input type="checkbox" id="listShorts"> Include Shorts</label><p id="listStatus" class="mono" role="status"></p><div class="detail-actions"><button class="button primary" id="createList" type="button">Make channel</button><button class="button" id="cancelList" type="button">Cancel</button></div></div></div>
-<div class="overlay" id="settingsOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><h2 id="settingsTitle">Cable box setup</h2><label class="check"><input type="checkbox" id="crtToggle" checked> CRT scanlines</label><label class="check"><input type="checkbox" id="staticToggle" checked> Static + click on channel change</label><label for="qualitySelect">Picture</label><select id="qualitySelect"><option value="2160">Sharpest (asks YouTube for up to 4K)</option><option value="1080">HD (up to 1080p)</option><option value="auto">Let YouTube decide</option></select><label class="check"><input type="checkbox" id="preloadToggle" checked> Pre-load channels above and below (turn off if the TV stutters)</label><label class="check"><input type="checkbox" id="genreToggle" checked> Genre channels (built from YouTube's topic tags)</label><button class="button" id="unhideGenres" type="button">Unhide genre channels</button><label for="vcrAuto">VCR auto-records my top</label><select id="vcrAuto"><option value="0">Nobody (only ● Record)</option><option value="3">3 creators</option><option value="5">5 creators</option><option value="10">10 creators</option></select><h2 style="margin-top:22px">Household sync</h2><p>Your channels, lists, VCR and watched history are shared by every device signed in with this Google account.</p><p class="mono" id="syncStatus" role="status"></p><div class="detail-actions"><button class="button" id="syncNow" type="button">Sync now</button><button class="button primary" id="syncConsent" type="button" hidden>Turn on sync</button></div><h2 style="margin-top:22px">For You channel</h2><p>Mix recent videos from your most opened creators in this guide. YouTube's standard API does not expose watch history.</p><label for="topCount">How many creators in the mix?</label><select id="topCount"><option value="5">Top 5</option><option value="12">Top 12</option><option value="25">Top 25</option><option value="50">Top 50</option></select><p>Favorite a creator to move them toward the front. To use your viewing history, get a YouTube activity JSON export from <a href="https://takeout.google.com/" target="_blank" rel="noopener noreferrer">Google Takeout</a>, then import its <strong>watch-history.json</strong> file here. The file is read locally in this browser and is not uploaded to the guide server.</p><label for="historyFile">Import watch-history.json</label><input id="historyFile" type="file" accept=".json,application/json"><p id="historyImportStatus" role="status">No history file imported.</p><button class="button primary" id="closeSettings" type="button">Done</button></div></div>
+<div class="overlay" id="settingsOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><h2 id="settingsTitle">Cable box setup</h2><label class="check"><input type="checkbox" id="crtToggle" checked> CRT scanlines</label><label class="check"><input type="checkbox" id="staticToggle" checked> Static + click on channel change</label><label for="qualitySelect">Picture</label><select id="qualitySelect"><option value="2160">Sharpest (asks YouTube for up to 4K)</option><option value="1080">HD (up to 1080p)</option><option value="auto">Let YouTube decide</option></select><label class="check"><input type="checkbox" id="preloadToggle" checked> Pre-load channels above and below (turn off if the TV stutters)</label><label class="check"><input type="checkbox" id="genreToggle" checked> Genre channels (built from YouTube's topic tags)</label><button class="button" id="unhideGenres" type="button">Unhide genre channels</button><label for="vcrAuto">VCR auto-records my top</label><select id="vcrAuto"><option value="0">Nobody (only ● Record)</option><option value="3">3 creators</option><option value="5">5 creators</option><option value="10">10 creators</option></select><h2 style="margin-top:22px">Account</h2><p class="mono" id="accountNote"></p><div class="detail-actions"><button class="button" id="disconnect" type="button" hidden>Disconnect</button></div><h2 style="margin-top:22px">Household sync</h2><p>Your channels, lists, VCR and watched history are shared by every device signed in with this Google account.</p><p class="mono" id="syncStatus" role="status"></p><div class="detail-actions"><button class="button" id="syncNow" type="button">Sync now</button><button class="button primary" id="syncConsent" type="button" hidden>Turn on sync</button></div><h2 style="margin-top:22px">New creators</h2><p>Channels 010+ show creators you don't subscribe to yet: ones your creators recommend, plus picks matched to your taste. They refresh daily; press → on a channel to say "Not interested" in someone.</p><div class="detail-actions"><button class="button" id="scoutNow" type="button">Find new creators now</button></div><h2 style="margin-top:22px">For You channel</h2><p>Mix recent videos from your most opened creators in this guide. YouTube's standard API does not expose watch history.</p><label for="topCount">How many creators in the mix?</label><select id="topCount"><option value="5">Top 5</option><option value="12">Top 12</option><option value="25">Top 25</option><option value="50">Top 50</option></select><p>Favorite a creator to move them toward the front. To use your viewing history, get a YouTube activity JSON export from <a href="https://takeout.google.com/" target="_blank" rel="noopener noreferrer">Google Takeout</a>, then import its <strong>watch-history.json</strong> file here. The file is read locally in this browser and is not uploaded to the guide server.</p><label for="historyFile">Import watch-history.json</label><input id="historyFile" type="file" accept=".json,.md,application/json,text/markdown"><p id="historyImportStatus" role="status">No history file imported.</p><button class="button primary" id="closeSettings" type="button">Done</button></div></div>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 (() => {
@@ -274,9 +281,9 @@
     {id:'sample-b',name:'Discovery Channel',videos:[{id:'M7lc1UVf-VE',title:'A sample scheduled program',duration:1344}]}
   ];
   let saved={};try{saved=JSON.parse(localStorage.getItem(STORE)||'{}')}catch{}
-  const state={subs:[],token:null,counts:saved.counts||{},seen:saved.seen||{},historyCounts:saved.historyCounts||{},historyNames:saved.historyNames||{},historyImport:saved.historyImport||null,favorites:new Set(saved.favorites||[]),topN:Number(saved.topN)||12,mixCache:saved.mixCache||null,lists:saved.lists||[],done:saved.done||{},vcr:{passes:{},recs:{},since:{},autoTop:5,...saved.vcr},preloadNeighbors:saved.preloadNeighbors??true,groups:saved.groups||[],hiddenGenres:saved.hiddenGenres||[],genreChannels:saved.genreChannels??true,printed:saved.printed||{},synced:false,quality:saved.quality||'2160',unplayable:new Set(),mode:'featured',query:'',limit:60,selectedId:'for-you',playingId:null,player:null,pending:null,playerErrors:0};
+  const state={subs:[],token:null,counts:saved.counts||{},seen:saved.seen||{},historyCounts:saved.historyCounts||{},historyNames:saved.historyNames||{},historyImport:saved.historyImport||null,favorites:new Set(saved.favorites||[]),topN:Number(saved.topN)||12,mixCache:saved.mixCache||null,lists:saved.lists||[],done:saved.done||{},vcr:{passes:{},recs:{},since:{},autoTop:5,...saved.vcr},preloadNeighbors:saved.preloadNeighbors??true,groups:saved.groups||[],hiddenGenres:saved.hiddenGenres||[],genreChannels:saved.genreChannels??true,discover:saved.discover||null,lastWatched:saved.lastWatched||{},discoverHidden:saved.discoverHidden||[],printed:saved.printed||{},synced:false,quality:saved.quality||'2160',unplayable:new Set(),mode:'featured',query:'',limit:60,selectedId:'for-you',playingId:null,player:null,pending:null,playerErrors:0};
   let lastNearby='',lastSchedule='',previewId=null,previewTimer=null,previewPlayer=null,previewReady=false,previewVideoId=null,previewRequest=null,watchedVideoId=null,watchTimer=null,watchRemaining=30000,watchStartedAt=0;
-  const snapshot=()=>JSON.stringify({...saved,counts:state.counts,seen:state.seen,historyCounts:state.historyCounts,historyNames:state.historyNames,historyImport:state.historyImport,favorites:[...state.favorites],topN:state.topN,mixCache:state.mixCache,lists:state.lists,done:state.done,vcr:state.vcr,preloadNeighbors:state.preloadNeighbors,groups:state.groups,hiddenGenres:state.hiddenGenres,genreChannels:state.genreChannels,printed:state.printed,quality:state.quality});
+  const snapshot=()=>JSON.stringify({...saved,counts:state.counts,seen:state.seen,historyCounts:state.historyCounts,historyNames:state.historyNames,historyImport:state.historyImport,favorites:[...state.favorites],topN:state.topN,mixCache:state.mixCache,lists:state.lists,done:state.done,vcr:state.vcr,preloadNeighbors:state.preloadNeighbors,groups:state.groups,hiddenGenres:state.hiddenGenres,genreChannels:state.genreChannels,printed:state.printed,discover:state.discover,discoverHidden:state.discoverHidden,lastWatched:state.lastWatched,quality:state.quality});
   // Storage can be full, blocked or missing on a TV WebView; trim seen history and retry once, never throw.
   const persist=()=>{try{scheduleCloudSync()}catch{}try{localStorage.setItem(STORE,snapshot())}catch{try{state.seen=Object.fromEntries(Object.entries(state.seen).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,5000));localStorage.setItem(STORE,snapshot())}catch{}}};
   const seenToday=id=>Number(state.seen[id]||0)>=new Date().setHours(0,0,0,0);
@@ -291,9 +298,10 @@
   const time=t=>new Date(t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
   const duration=s=>{const m=String(s||'').match(/^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);return m?Math.max(60,(Number(m[1]||0)*86400+Number(m[2]||0)*3600+Number(m[3]||0)*60+Number(m[4]||0))):900};
   function videoIdFromUrl(raw){try{const url=new URL(raw);const host=url.hostname.toLowerCase();const id=host==='youtu.be'?url.pathname.slice(1):host==='youtube.com'||host==='www.youtube.com'||host==='m.youtube.com'?url.searchParams.get('v'):null;return /^[A-Za-z0-9_-]{11}$/.test(id||'')?id:null}catch{return null}}
-  async function importWatchHistory(file){if(!file)return;const note=$('historyImportStatus');note.textContent='Reading watch history locally…';try{const parsed=JSON.parse(await file.text()),records=Array.isArray(parsed)?parsed:parsed?.items;if(!Array.isArray(records))throw new Error('Expected the watch-history.json array from Google Takeout.');const imported=new Map(),counts={},names={};let watched=0;for(const row of records){if(!/^Watched\b/i.test(String(row?.title||'')))continue;const id=videoIdFromUrl(row.titleUrl);if(!id)continue;watched++;const when=Date.parse(row.time);if(Number.isFinite(when)&&when>0)imported.set(id,Math.max(when,imported.get(id)||0));for(const subtitle of row.subtitles||[]){const name=String(subtitle.name||'').trim().toLowerCase();if(name)names[name]=(names[name]||0)+1;const channelId=String(subtitle.url||'').match(/\/channel\/(UC[A-Za-z0-9_-]+)/)?.[1];if(channelId)counts[channelId]=(counts[channelId]||0)+1}}if(!watched)throw new Error('No watched YouTube videos with video links were found in this file.');state.historyCounts=counts;state.historyNames=names;for(const [id,when] of imported){state.seen[id]=Math.max(when,Number(state.seen[id]||0));state.done[id]=state.done[id]||when}state.done=Object.fromEntries(Object.entries(state.done).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,60000));state.seen=Object.fromEntries(Object.entries(state.seen).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,20000));state.historyImport={count:watched,date:Date.now(),kept:Object.keys(state.seen).length};persist();note.textContent=`Imported ${watched.toLocaleString()} watched entries. Tracking the latest ${state.historyImport.kept.toLocaleString()} video IDs locally.`;renderGuide()}catch(error){note.textContent=`Import failed: ${error.message}`}finally{$('historyFile').value=''}}
+  async function importWatchHistory(file){if(!file)return;if(/\.md$/i.test(file.name)){const text=await file.text(),seen={};for(const m of text.matchAll(/youtube\.com\/channel\/(UC[\w-]+)\)\s*\|\s*(\d{4}-\d{2}-\d{2})/g))seen[m[1]]=Date.parse(m[2]);state.lastWatched=seen;persist();rankCache=null;$('historyImportStatus').textContent=`Imported last-watched dates for ${Object.keys(seen).length} creators. For You and genre channels now favor who you watch lately.`;$('historyFile').value='';renderGuide();return}const note=$('historyImportStatus');note.textContent='Reading watch history locally…';try{const parsed=JSON.parse(await file.text()),records=Array.isArray(parsed)?parsed:parsed?.items;if(!Array.isArray(records))throw new Error('Expected the watch-history.json array from Google Takeout.');const imported=new Map(),counts={},names={};let watched=0;for(const row of records){if(!/^Watched\b/i.test(String(row?.title||'')))continue;const id=videoIdFromUrl(row.titleUrl);if(!id)continue;watched++;const when=Date.parse(row.time);if(Number.isFinite(when)&&when>0)imported.set(id,Math.max(when,imported.get(id)||0));for(const subtitle of row.subtitles||[]){const name=String(subtitle.name||'').trim().toLowerCase();if(name)names[name]=(names[name]||0)+1;const channelId=String(subtitle.url||'').match(/\/channel\/(UC[A-Za-z0-9_-]+)/)?.[1];if(channelId)counts[channelId]=(counts[channelId]||0)+1}}if(!watched)throw new Error('No watched YouTube videos with video links were found in this file.');state.historyCounts=counts;state.historyNames=names;for(const [id,when] of imported){state.seen[id]=Math.max(when,Number(state.seen[id]||0));state.done[id]=state.done[id]||when}state.done=Object.fromEntries(Object.entries(state.done).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,60000));state.seen=Object.fromEntries(Object.entries(state.seen).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,20000));state.historyImport={count:watched,date:Date.now(),kept:Object.keys(state.seen).length};persist();note.textContent=`Imported ${watched.toLocaleString()} watched entries. Tracking the latest ${state.historyImport.kept.toLocaleString()} video IDs locally.`;renderGuide()}catch(error){note.textContent=`Import failed: ${error.message}`}finally{$('historyFile').value=''}}
   const creators=()=>state.subs.length?state.subs:SAMPLE;
-  const score=c=>(state.favorites.has(c.id)?100:0)+Math.min(50,Number(state.counts[c.id]||0))*4+Math.log2(1+Math.max(Number(state.historyCounts[c.youtubeId]||0),Number(state.historyNames[c.name.toLowerCase()]||0)))*12;
+  const recency=c=>{const t=state.lastWatched?.[c.youtubeId];if(!t)return 0;const days=(Date.now()-t)/(24*HOUR);return days<=14?60:days<=45?40:days<=120?20:8};
+  const score=c=>recency(c)+(state.favorites.has(c.id)?100:0)+Math.min(50,Number(state.counts[c.id]||0))*4+Math.log2(1+Math.max(Number(state.historyCounts[c.youtubeId]||0),Number(state.historyNames[c.name.toLowerCase()]||0)))*12;
   let rankCache=null;
   const ranked=()=>{const list=creators();if(rankCache&&rankCache.list===list&&rankCache.size===list.length&&Date.now()-rankCache.at<1000)return rankCache.order;const order=list.map((c,i)=>({c,i,s:score(c)})).sort((a,b)=>b.s-a.s||a.i-b.i).map(x=>x.c);rankCache={list,size:list.length,at:Date.now(),order,top:new Map()};return order};
   const topSet=n=>{ranked();let set=rankCache.top.get(n);if(!set){set=new Set(rankCache.order.slice(0,n));rankCache.top.set(n,set)}return set};
@@ -302,10 +310,10 @@
   const mixKey=()=>`${new Date().toDateString()}|${state.topN}`;
   const mixChannel=()=>{const base={id:'for-you',name:'For You',subtitle:`Top ${state.topN} creator mix`};if(state.subs.length&&state.mixCache?.key===mixKey()&&state.mixCache.videos?.length)return {...base,videos:spreadCreators(state.mixCache.videos)};const top=ranked().slice(0,state.topN);const items=top.flatMap(c=>(c.videos||[]).filter(v=>v.id).slice(0,3).map(v=>({...v,creator:c.name,creatorId:c.id})));items.sort((a,b)=>hash(a.id)-hash(b.id));items.splice(0,items.length,...spreadCreators(items));if(state.subs.length&&items.length&&top.every(c=>c.loaded||c.error||!c.uploadsPlaylist)){state.mixCache={key:mixKey(),videos:items};persist()}return {...base,videos:items,subtitle:state.subs.length&&state.mixCache?.key!==mixKey()?'Mix is filling…':base.subtitle}};
   const unseenChannel=()=>({id:'unseen-today',name:'Unseen Today',videos:spreadCreators(mixChannel().videos.filter(v=>!seenToday(v.id))),subtitle:'Starts when you tune in',onDemand:true});
-  const special=id=>id==='for-you'||id==='unseen-today'||id==='vcr'||/^(grp|genre)-/.test(id)||String(id).startsWith('list-');
+  const special=id=>id==='for-you'||id==='unseen-today'||id==='vcr'||/^(grp|genre|disc)-/.test(id)||String(id).startsWith('list-');
   const channelNo=c=>c.no?c.no:c.id==='for-you'?'001':c.id==='unseen-today'?'002':String(creators().indexOf(c)+101);
   function hash(s){let n=2166136261;for(const ch of s)n=Math.imul(n^ch.charCodeAt(0),16777619);return n>>>0}
-  const byId=id=>/^(grp|genre)-/.test(id)?groupById(id):id==='vcr'?vcrChannel():String(id).startsWith('list-')?listChannels().find(c=>c.id===id):id==='for-you'?mixChannel():id==='unseen-today'?unseenChannel():creators().find(c=>c.id===id);
+  const byId=id=>/^(grp|genre|disc)-/.test(id)?groupById(id):id==='vcr'?vcrChannel():String(id).startsWith('list-')?listChannels().find(c=>c.id===id):id==='for-you'?mixChannel():id==='unseen-today'?unseenChannel():creators().find(c=>c.id===id);
   function visible(){const q=state.query.trim().toLowerCase();if(q){const match=creators().filter(c=>c.name.toLowerCase().includes(q));return [...listChannels(),...groupChannels()].filter(c=>c.name.toLowerCase().includes(q)).concat(match.slice(0,state.limit))}const built=[mixChannel(),unseenChannel(),vcrChannel(),...listChannels(),...groupChannels()];if(state.mode==='favorites')return [...built,...ranked().filter(c=>state.favorites.has(c.id))];if(state.mode==='all')return [...built,...creators().slice(0,state.limit)];return [...built,...ranked().slice(0,24)]}
   const scheduleSig=()=>`${windowStart()}|${visible().map(c=>`${c.id}:${positionAt(c)?.video.id||''}`).join(',')}`;
   function windowStart(now=Date.now()){return Math.floor(now/(30*MINUTE))*30*MINUTE}
@@ -370,7 +378,7 @@
       const warm=[...new Set([...ranked().slice(0,24),...recordedCreators()])];
       for(const c of warm)ensureFresh(c,VIDEO_FRESH);
       while(loadActive||loadQueue.length)await new Promise(r=>setTimeout(r,300));
-      $('status').textContent=`Connected · ${found.length} creators`;cloudSync();$('connect').textContent='Refresh guide';$('disconnect').hidden=false;renderGuide();
+      $('status').textContent=`Connected · ${found.length} creators`;Promise.resolve(cloudSync()).finally(()=>runDiscovery());$('connect').textContent='Refresh guide';$('disconnect').hidden=false;renderGuide();
     }catch(e){$('status').textContent=`Sync failed: ${e.message}`}
   }
   function connect(){if(location.protocol==='file:'){$('fileWarning').hidden=false;return}if(!window.google?.accounts?.oauth2){$('status').textContent='Google sign-in is loading. Try again.';return}try{const client=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:'https://www.googleapis.com/auth/youtube.readonly',callback:r=>{if(r.error){$('status').textContent=`Sign-in failed: ${r.error}`;return}state.token=r.access_token;sync()}});client.requestAccessToken({prompt:''})}catch(e){$('status').textContent=`Could not sign in: ${e.message}`}}
@@ -731,20 +739,20 @@
   function genreOf(c){if(c._topics===c.topics)return c._genre;c._topics=c.topics;c._genre=null;for(const [key,,re] of GENRES)if((c.topics||[]).some(t=>re.test(t))){c._genre=key;break}return c._genre}
   function buildGroup(def,no){
     const order=ranked(),pos=new Map(order.map((c,i)=>[c,i])),byCreatorId=new Map(order.map(c=>[c.id,c]));
-    const members=(def.creatorIds?def.creatorIds.map(id=>byCreatorId.get(id)):order.filter(c=>genreOf(c)===def.genre)).filter(Boolean).sort((a,b)=>pos.get(a)-pos.get(b));
+    const members=def.members?def.members.slice():(def.creatorIds?def.creatorIds.map(id=>byCreatorId.get(id)):order.filter(c=>genreOf(c)===def.genre)).filter(Boolean).sort((a,b)=>pos.get(a)-pos.get(b));
     const top=members.slice(0,GROUP_MEMBERS),key=`${new Date().toDateString()}|${top.map(c=>c.id).join(',')}`,printed=state.printed[def.id];
     let videos;
     if(printed?.key===key&&printed.videos?.length)videos=spreadCreators(printed.videos); // lineups printed before a rule change still come out clean
     else{
-      videos=spreadCreators(top.flatMap(c=>(c.videos||[]).filter(v=>v.id).slice(0,PER_MEMBER).map(v=>({...v,creator:c.name,creatorId:c.id}))).sort((a,b)=>hash(a.id)-hash(b.id)));
+      videos=spreadCreators(top.flatMap(c=>(c.videos||[]).filter(v=>v.id).slice(0,def.perMember||PER_MEMBER).map(v=>({...v,creator:c.name,creatorId:c.id}))).sort((a,b)=>hash(a.id)-hash(b.id)));
       if(videos.length&&top.every(c=>c.loaded||c.error||!c.uploadsPlaylist)){state.printed[def.id]={key,videos};persist()}
     }
     const filling=state.printed[def.id]?.key!==key;
-    return {id:def.id,name:def.name,no,isGroup:true,genre:def.genre,def,members:top,allMembers:members,videos,
+    return {id:def.id,name:def.name,no,isGroup:true,genre:def.genre,discovery:!!def.discovery,def,members:top,allMembers:members,videos,
       subtitle:`${members.length} creator${members.length===1?'':'s'}${filling&&state.token?' · filling…':' · no repeats'}`};
   }
   function groupChannels(){
-    const custom=state.groups.map((g,i)=>buildGroup(g,String(20+i).padStart(3,'0')));
+    const custom=[...discoveryChannels(),...state.groups.map((g,i)=>buildGroup(g,String(20+i).padStart(3,'0')))];
     if(!state.genreChannels||!state.subs.length)return custom;
     const genres=GENRES.map(([key,name],i)=>({def:{id:`genre-${key}`,name,genre:key},no:String(50+i).padStart(3,'0')}))
       .filter(g=>!state.hiddenGenres.includes(g.def.genre)).map(g=>buildGroup(g.def,g.no)).filter(g=>g.allMembers.length>=2);
@@ -754,15 +762,24 @@
 
   // Detail-panel buttons for channels made of creators
   function renderGroupBits(c){
-    const b=$('groupButton'),h=$('hideGroupButton');
-    b.textContent=c.isGroup?(c.genre?'Customize':'Edit channel'):'＋ Channel';
-    h.hidden=!c.isGroup;h.textContent=c.genre?'Hide channel':'Delete channel';
+    const b=$('groupButton'),h=$('hideGroupButton'),airing=c.discovery&&positionAt(c)?.video;
+    b.hidden=!c.genre;b.textContent='Customize';
+    h.hidden=!(c.genre||airing);h.textContent=c.genre?'Hide channel':airing?`Not interested in ${airing.creator}`:'';
   }
+  // Header buttons: new channel (starting from the selected creator, if any) and edit the selected channel
+  $('newChannelTop').onclick=()=>{const c=byId(state.selectedId);openGroupDialog({ids:c&&!special(c.id)?[c.id]:[]})};
+  $('editChannelTop').onclick=()=>{const c=byId(state.selectedId);
+    if(c?.isGroup&&c.genre)openGroupDialog({fromGenre:c.genre,name:c.name,ids:c.allMembers.map(m=>m.id)});
+    else if(c?.isGroup&&!c.discovery)openGroupDialog({editId:c.id});
+    else if(state.groups.length)openGroupDialog({editId:state.groups[0].id});
+    else openGroupDialog({})};
+  $('deleteGroup').onclick=()=>{const b=$('deleteGroup'),id=draft.editId;if(!id)return;if(b.textContent!=='Press again to delete'){b.textContent='Press again to delete';return}
+    state.tombstones[id]=Date.now();saveSyncMeta();state.groups=state.groups.filter(g=>g.id!==id);delete state.printed[id];persist();$('groupOverlay').hidden=true;state.selectedId='for-you';renderGuide()};
   $('groupButton').onclick=()=>{const c=byId(state.selectedId);if(c?.isGroup)openGroupDialog(c.genre?{fromGenre:c.genre,name:c.name,ids:c.allMembers.map(m=>m.id)}:{editId:c.id});else openGroupDialog({ids:c&&!special(c.id)?[c.id]:[]})};
   $('hideGroupButton').onclick=()=>{const c=byId(state.selectedId),b=$('hideGroupButton');if(!c?.isGroup)return;
-    if(c.genre)state.hiddenGenres.push(c.genre);
-    else{if(b.textContent!=='Press again to delete'){b.textContent='Press again to delete';return}state.tombstones[c.id]=Date.now();saveSyncMeta();state.groups=state.groups.filter(g=>g.id!==c.id);delete state.printed[c.id]}
-    persist();state.selectedId='for-you';renderGuide()};
+    if(c.genre){state.hiddenGenres.push(c.genre);state.selectedId='for-you'}
+    else if(c.discovery){const v=positionAt(c)?.video;if(!v)return;state.discoverHidden=[...new Set([...(state.discoverHidden||[]),v.creatorId])];delete state.printed[c.id]}
+    persist();renderGuide()};
 
   // The channel editor: pick an existing channel or start a new one, name it, tick creators.
   const draft={ids:new Set(),editId:null,fromGenre:null,limit:150};
@@ -772,7 +789,7 @@
     $('groupPick').innerHTML=`<option value="">＋ New channel</option>${state.groups.map(x=>`<option value="${clean(x.id)}">${clean(x.name)}</option>`).join('')}`;
     $('groupPick').value=editId||'';$('groupName').value=g?g.name:(fromGenre?`My ${name}`:name);$('groupSearch').value='';
     $('groupStatus').textContent=fromGenre?'Saving makes this your own channel and hides the automatic one.':'';
-    $('saveGroup').textContent=editId?'Save channel':'Make channel';
+    $('saveGroup').textContent=editId?'Save channel':'Make channel';$('deleteGroup').hidden=!editId;$('deleteGroup').textContent='Delete channel';
     draft.limit=150;renderGroupList();$('groupOverlay').hidden=false;$('groupName').focus();
   }
   function renderGroupList(){
@@ -791,8 +808,8 @@
   $('groupList').onchange=e=>{const id=e.target.dataset?.id;if(!id)return;if(e.target.checked)draft.ids.add(id);else draft.ids.delete(id);$('groupCount').textContent=`${draft.ids.size} picked`};
   $('groupSearch').oninput=()=>{draft.limit=150;renderGroupList()};
   $('groupPick').onchange=e=>{const g=state.groups.find(x=>x.id===e.target.value);
-    if(g){const keep=[...draft.ids];draft.editId=g.id;draft.fromGenre=null;draft.ids=new Set([...g.creatorIds,...keep]);$('groupName').value=g.name;$('saveGroup').textContent='Save channel'}
-    else{draft.editId=null;$('saveGroup').textContent='Make channel'}
+    if(g){const keep=[...draft.ids];draft.editId=g.id;draft.fromGenre=null;draft.ids=new Set([...g.creatorIds,...keep]);$('groupName').value=g.name;$('saveGroup').textContent='Save channel';$('deleteGroup').hidden=false}
+    else{draft.editId=null;$('saveGroup').textContent='Make channel';$('deleteGroup').hidden=true}
     renderGroupList()};
   function saveGroup(){
     const name=$('groupName').value.trim()||'My channel';if(!draft.ids.size){$('groupStatus').textContent='Tick at least one creator.';return}
@@ -872,10 +889,10 @@
   const newest=(obj,n)=>Object.fromEntries(Object.entries(obj||{}).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,n));
   const maxMerge=(a={},b={})=>{const out={...a};for(const [k,v] of Object.entries(b))if(!(k in out)||Number(v)>Number(out[k]))out[k]=v;return out};
   function settingsObj(){return {favorites:[...state.favorites].sort(),topN:state.topN,quality:state.quality,preloadNeighbors:state.preloadNeighbors,genreChannels:state.genreChannels,hiddenGenres:[...state.hiddenGenres].sort(),
-    vcr:{passes:state.vcr.passes,since:state.vcr.since,autoTop:state.vcr.autoTop},history:{counts:state.historyCounts,names:state.historyNames,import:state.historyImport}}}
+    vcr:{passes:state.vcr.passes,since:state.vcr.since,autoTop:state.vcr.autoTop},history:{counts:state.historyCounts,names:state.historyNames,import:state.historyImport,lastWatched:state.lastWatched},discover:state.discover,discoverHidden:[...(state.discoverHidden||[])].sort()}}
   function applySettings(x){state.favorites=new Set(x.favorites||[]);Object.assign(state,{topN:x.topN??state.topN,quality:x.quality??state.quality,preloadNeighbors:x.preloadNeighbors??state.preloadNeighbors,genreChannels:x.genreChannels??state.genreChannels,hiddenGenres:x.hiddenGenres||[]});
     Object.assign(state.vcr,{passes:x.vcr?.passes||{},since:x.vcr?.since||{},autoTop:x.vcr?.autoTop??state.vcr.autoTop});
-    if(x.history){state.historyCounts=x.history.counts||{};state.historyNames=x.history.names||{};state.historyImport=x.history.import||null}}
+    if(x.discover!==undefined)state.discover=x.discover;if(x.discoverHidden)state.discoverHidden=x.discoverHidden;if(x.history){state.lastWatched=x.history.lastWatched||state.lastWatched;state.historyCounts=x.history.counts||{};state.historyNames=x.history.names||{};state.historyImport=x.history.import||null}}
   // A settings edit is detected by comparing against what was last synced, so no setting needs its own timestamp.
   function noteSettingsChange(){const now=JSON.stringify(settingsObj());if(now!==syncMeta.settingsJSON){syncMeta.settingsJSON=now;syncMeta.settingsAt=Date.now();saveSyncMeta()}}
   function localDoc(){
@@ -941,6 +958,92 @@
   function renderSyncStatus(){const ago=syncState.at?` · last synced ${Math.max(0,Math.round((Date.now()-syncState.at)/MINUTE))} min ago`:'';$('syncStatus').textContent=`${syncState.note}${syncState.note==='Synced'?ago:''}`;$('syncConsent').hidden=!syncState.needsConsent}
   $('syncNow').onclick=()=>cloudSync();
   $('syncConsent').onclick=()=>{$('settingsOverlay').hidden=true;if(tvConfig)tvSignIn('sync')};
+  // ── Discovery: channels of creators you don't subscribe to yet ─────────────────────────────────────────
+  // Two sources, refreshed at most once a day and shared through household sync:
+  //  - scouting: the "featured channels" your most-watched creators recommend on their own channel pages, ranked by
+  //    how many of your creators vouch for each one (CH 010, New to You)
+  //  - curated picks by taste cluster, chosen from the household's subscriptions (CH 011+). Handles that no longer
+  //    resolve on YouTube are dropped quietly.
+  // Anything you already subscribe to is skipped, and "Not interested" in a channel's options hides a creator for good.
+  const CURATED=[
+    ["Deep Dives",["@BigJoel","@JennyNicholson","@LindsayEllisVids","@NoahCaldwellGervais","@MaggieMaeFish","@MinaLe","@SolarSands","@patrickhwillems","@MoonChannel","@Nerdwriter1","@LessonsfromtheScreenplay","@KatBlaque","@MiaMulder","@DrewGooden","@AdamSomething"]],
+    ["After Dark",["@LEMMiNO","@MrBallen","@Local58TV","@KanePixels","@TheWhyFiles","@DowntheRabbitHole","@InternetHistorian","@ScaryInteresting","@Swaggersouls"]],
+    ["Lab Coat",["@SteveMould","@TomScottGo","@standupmaths","@PracticalEngineeringChannel","@smartereveryday","@3blue1brown","@PrimerBlobs","@acollierastro","@AppliedScience","@MustardChannel","@besmart","@CodysLab","@SabineHossenfelder","@MapMen"]],
+    ["Time Machine",["@HistoriaCivilis","@KingsandGenerals","@LetsTalkReligion","@RobWords","@Langfocus","@NativLang","@townsends","@GlenAndFriendsCooking","@voicesofthepast","@UsefulCharts","@Premodernist","@extrahistory","@JayForeman51"]],
+    ["Workshop",["@BernadetteBanner","@MorganDonner","@LauraKampf","@StuffMadeHere","@HandToolRescue","@EvanandKatelyn","@colinfurze","@CharlesDowding1","@HuwRichards","@epicgardening","@MySelfReliance","@aragusea","@EthanChlebowski","@JKenjiLopezAlt"]],
+    ["Circuit Board",["@JeffGeerling","@Fireship","@TwoMinutePapers","@aiexplained-official","@GamersNexus","@Level1Techs","@Dave2D","@mkbhd","@ThePrimeTimeagen","@HardwareHaven","@CraftComputing","@AndrejKarpathy","@DwarkeshPatel","@bycloudAI"]],
+    ["Save Point",["@NoclipDocs","@Razbuten","@ScottTheWoz","@NitroRad","@JosephAndersonChannel","@pannenkoek2012","@StopSkeletonFight"]],
+    ["Late Night",["@SomeMoreNews","@LastWeekTonight","@Danny-Gonzalez","@taylortomlinson","@KnowingBetter","@Wendoverproductions","@HowtoADHD","@DrTraceyMarks"]]];
+  const DISCOVERY_DAY=24*HOUR,SCOUTS=120,discLive=new Map();
+  let discovering=null;
+  const subscribedIds=()=>new Set(state.subs.map(c=>c.youtubeId));
+  // Discovered creators are plain creator objects (same shape as subscriptions), kept alive for the session so their
+  // uploads load once and stay loaded.
+  const liveCreator=x=>{let c=discLive.get(x.id);if(!c){c={...x,videos:[],loaded:false,discovered:true};discLive.set(x.id,c)}return c};
+  const creatorFrom=ch=>({id:`yt-${ch.id}`,youtubeId:ch.id,name:ch.snippet?.title||'Creator',uploadsPlaylist:ch.contentDetails?.relatedPlaylists?.uploads,topics:(ch.topicDetails?.topicCategories||[]).map(u=>decodeURIComponent(u.split('/wiki/')[1]||''))});
+  async function runDiscovery(force){
+    if(!state.token||discovering)return discovering;
+    const d=state.discover||{};if(!force&&d.at&&Date.now()-d.at<DISCOVERY_DAY&&d.curated)return;
+    discovering=(async()=>{
+      const before=$('status').textContent;$('status').textContent='Scouting new creators…';
+      try{
+        const subs=subscribedIds(),curated={...(d.curated||{})};
+        // curated picks: resolve each handle once (1 quota unit each), then reuse
+        for(const [,handles] of CURATED)for(const h of handles){
+          if(curated[h]!==undefined)continue;
+          try{const j=await api('channels',{part:'snippet,contentDetails,topicDetails',forHandle:h});curated[h]=j.items?.[0]?creatorFrom(j.items[0]):null}catch{curated[h]=null}
+        }
+        // scouting: featured channels of your top creators
+        const mentions=new Map(),features=new Map(); // features: scout → every channel it recommends (subscribed or not)
+        const scouts=ranked().slice(0,SCOUTS).filter(c=>c.youtubeId);
+        for(let i=0;i<scouts.length;i+=6)await Promise.allSettled(scouts.slice(i,i+6).map(async c=>{
+          const j=await api('channelSections',{part:'contentDetails',channelId:c.youtubeId}),mine=new Set();features.set(c.youtubeId,mine);
+          for(const sec of j.items||[])for(const id of sec.contentDetails?.channels||[]){
+            mine.add(id);if(subs.has(id)||id===c.youtubeId)continue;const m=mentions.get(id)||{count:0,by:new Map()};if(!m.by.has(c.youtubeId)){m.by.set(c.youtubeId,c.name);m.count++}mentions.set(id,m);
+          }
+        }));
+        // Spin-offs aren't discoveries: if everyone vouching for a channel belongs to one network (they recommend each
+        // other, like Linus Tech Tips and TechLinked) or shares its name (SciShow → SciShow Space), skip it.
+        const linked=(a,b)=>features.get(a)?.has(b)||features.get(b)?.has(a);
+        const words=n=>String(n).toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>=4);
+        const spinOff=(id,m)=>{const vouchers=[...m.by.keys()];if(vouchers.some(v=>linked(v,id)&&features.get(id)?.has(v)))return true;
+          if(vouchers.length>1&&vouchers.every((a,i)=>vouchers.every((b,k)=>i===k||linked(a,b))))return true;return false};
+        const squash=n=>String(n).toLowerCase().replace(/[^a-z0-9]+/g,'');
+        const nameClash=(name,m)=>[...m.by.values()].some(v=>words(v).some(x=>squash(name).includes(x))||words(name).some(x=>squash(v).includes(x)));
+        const top=[...mentions].filter(([id,m])=>!spinOff(id,m)).sort((a,b)=>b[1].count-a[1].count).slice(0,80);
+        const scouted=[];
+        for(let i=0;i<top.length;i+=50){const group=top.slice(i,i+50),j=await api('channels',{part:'snippet,contentDetails,topicDetails',id:group.map(([id])=>id).join(',')});
+          const byId=new Map((j.items||[]).map(x=>[x.id,x]));
+          for(const [id,m] of group){const ch=byId.get(id);if(!ch?.contentDetails?.relatedPlaylists?.uploads||nameClash(ch.snippet?.title||'',m))continue;scouted.push({...creatorFrom(ch),mentions:m.count,vouchedBy:[...m.by.values()].slice(0,3)})}}
+        scouted.splice(40);
+        state.discover={at:Date.now(),curated,scouted};persist();
+      }catch(e){console.warn('discovery',e)}
+      finally{discovering=null;if($('status').textContent==='Scouting new creators…')$('status').textContent=before;renderGuide()}
+    })();
+    return discovering;
+  }
+  function discoveryChannels(){
+    const d=state.discover;if(!d)return [];
+    const subs=subscribedIds(),hidden=new Set(state.discoverHidden||[]),keep=x=>x&&x.uploadsPlaylist&&!subs.has(x.youtubeId)&&!hidden.has(x.id);
+    const out=[],scouted=(d.scouted||[]).filter(keep).map(liveCreator);
+    const curatedAll=CURATED.flatMap(([,hs])=>hs.map(h=>d.curated?.[h])).filter(keep);
+    // New to You: the most-vouched-for scouted creators, topped up with curated picks if scouting found only a few
+    const perVoucher=new Map(),diverse=scouted.filter(x=>{const v=x.vouchedBy?.[0]||'';const n=(perVoucher.get(v)||0)+1;perVoucher.set(v,n);return n<=2});
+    const newToYou=[...diverse,...curatedAll.filter(x=>!diverse.some(s=>s.id===x.id)).map(liveCreator)].slice(0,20);
+    if(newToYou.length)out.push(buildGroup({id:'disc-new',name:'New to You',members:newToYou,perMember:2,discovery:true},'010'));
+    CURATED.forEach(([name,handles],i)=>{const members=handles.map(h=>d.curated?.[h]).filter(keep).map(liveCreator);
+      if(members.length>=3)out.push(buildGroup({id:`disc-${name.toLowerCase().replace(/\W+/g,'-')}`,name,members,perMember:2,discovery:true},String(11+i).padStart(3,'0')))});
+    return out;
+  }
+  $('scoutNow').onclick=()=>{$('scoutNow').textContent='Scouting…';Promise.resolve(runDiscovery(true)).finally(()=>{$('scoutNow').textContent='Find new creators now'})};
+  // ── Status light ─────────────────────────────────────────────────────────────────────────────────
+  function updateStatusLight(){
+    const t=$('status').textContent,light=$('statusLight');
+    const kind=/^Connected/.test(t)?'ok':/…|Reading|building|checking|Loading|Signed in|Saved lineup|Scouting/.test(t)?'busy':/^Sample|^Disconnected/.test(t)?'off':'err';
+    light.className=`status-light ${kind}`;light.title=t;$('status').classList.toggle('quiet',kind!=='err');
+    $('accountNote').textContent=kind==='ok'?t.replace(/^Connected · /,'Connected to YouTube · '):t;
+  }
+  new MutationObserver(updateStatusLight).observe($('status'),{childList:true,characterData:true,subtree:true});updateStatusLight();
   // A focused cross-origin iframe swallows every remote key, so hand focus straight back to the watch panel.
   window.addEventListener('blur',()=>{if($('watchOverlay').hidden)return;setTimeout(()=>{if(document.activeElement?.tagName==='IFRAME')$('watchPanel').focus({preventScroll:true})},0)});
   window.onYouTubeIframeAPIReady=()=>{ytResolve();wrapPreview()};
