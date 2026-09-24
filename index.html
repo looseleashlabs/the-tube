@@ -442,10 +442,10 @@
   const DECKS=4,NEIGHBOR_REFRESH=45000;
   // YouTube no longer lets embeds pick a quality; it chooses one to fit the player's pixel size. So the players are
   // laid out at a full 1080p or 4K canvas and scaled down to the screen, which makes YouTube stream the sharp version.
-  const QUALITY_CANVAS={auto:null,'720':[1280,720],'1080':[1920,1080],'2160':[3840,2160]};
+  const QUALITY_CANVAS={auto:null,'360':[640,360],'720':[1280,720],'1080':[1920,1080],'2160':[3840,2160]};
   // On a TV box a channel starts on a small (quick) stream and steps up to the chosen picture once it's playing
   let quickStart=false,stepUpTimer=null;
-  function fitDecks(){const box=$('videoBox'),size=QUALITY_CANVAS[quickStart&&state.quality!=='auto'?'720':state.quality];box.classList.toggle('canvas',!!size);if(!size)return;const [w,h]=size,scale=Math.min(box.clientWidth/w,box.clientHeight/h)||1;box.style.setProperty('--cw',w+'px');box.style.setProperty('--ch',h+'px');box.style.setProperty('--cs',scale)}
+  function fitDecks(){const box=$('videoBox'),size=QUALITY_CANVAS[quickStart&&state.quality!=='auto'?'360':state.quality];box.classList.toggle('canvas',!!size);if(!size)return;const [w,h]=size,scale=Math.min(box.clientWidth/w,box.clientHeight/h)||1;box.style.setProperty('--cw',w+'px');box.style.setProperty('--ch',h+'px');box.style.setProperty('--cs',scale)}
   new ResizeObserver(fitDecks).observe($('videoBox'));
   let ytResolve;const ytReady=new Promise(res=>ytResolve=res);if(window.YT?.Player)ytResolve();
   const decks=[...Array(DECKS)].map((_,i)=>({i,player:null,ready:null,shell:null,mode:'idle',role:null,videoId:null,startAt:0,primed:false,seq:0,armTimer:null}));
