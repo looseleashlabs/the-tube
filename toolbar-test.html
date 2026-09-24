@@ -1,0 +1,12 @@
+<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>toolbar test</title>
+<body style="margin:0;background:#10206f;color:#f5d000;font:32px sans-serif">
+<div id="box" style="position:fixed;inset:0;display:grid;place-items:center;border:8px solid #f5d000">window.innerHeight = <span id="h"></span></div>
+<div style="height:300vh"></div>
+<script>
+const show=()=>{h.textContent=innerHeight+' · scrollY '+scrollY};show();addEventListener('resize',show);addEventListener('scroll',show);
+setTimeout(()=>{scrollTo({top:400,behavior:'smooth'})},1500);
+addEventListener('keydown',e=>{h.textContent='key '+e.key;e.preventDefault()});
+addEventListener('popstate',()=>{h.textContent='popstate (Back reached the page)';history.pushState({},'')});
+history.pushState({},'');
+</script>
