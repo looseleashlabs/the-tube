@@ -235,6 +235,27 @@
   #warp{position:fixed;inset:0;z-index:998;pointer-events:none;opacity:0;background:repeating-linear-gradient(0deg,#fff3 0 2px,#0000 2px 4px),repeating-radial-gradient(circle at 37% 61%,#888 0 1px,#111 1px 3px),#222;mix-blend-mode:normal}
 #warp.go{animation:warp .55s ease-out}
 @keyframes warp{0%{opacity:1;transform:scaleY(1) skewX(0)}25%{opacity:1;transform:scaleY(1.04) skewX(8deg);filter:blur(1px)}55%{opacity:.95;transform:scaleY(.03) skewX(-6deg);filter:brightness(2.4)}100%{opacity:0;transform:scaleY(1)}}
+/* Cable-box style: nothing shrinks the show any more; the banner and browse strip float over it */
+#watchOverlay .watch-panel.squeeze .video-box,#watchOverlay .watch-panel.browsing .video-box{transform:none;box-shadow:none}
+#watchOverlay .banner{background:linear-gradient(180deg,#2331a8b8,#0d1455cc)}
+/* "Tuning in" card while a new channel loads behind the one you're leaving: a little set with rabbit ears */
+#tuner{position:absolute;left:50%;top:40%;z-index:6;transform:translate(-50%,-50%) scale(.9);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;display:grid;justify-items:center;gap:14px}
+#tuner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#tuner .set{position:relative;width:190px;height:140px;background:#5a3b22;border:5px solid #2b1a0e;border-radius:18px;box-shadow:8px 8px 0 #000a;padding:14px 50px 14px 14px}
+#tuner .set::after{content:'';position:absolute;right:14px;top:22px;width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#d9c08a,#7a5a2a);box-shadow:0 38px 0 -4px #b89a5a;animation:knob 1.6s steps(6) infinite}
+#tuner .screen{width:100%;height:100%;border-radius:14px/24px;background:linear-gradient(90deg,#c0c0c0 0 14.3%,#c0c000 0 28.6%,#00c0c0 0 42.9%,#00c000 0 57.1%,#c000c0 0 71.4%,#c00000 0 85.7%,#0000c0 0);background-size:200% 100%;animation:bars 1.1s linear infinite,flick .18s steps(2) infinite;box-shadow:inset 0 0 18px #000c}
+#tuner .ears{position:absolute;left:50%;top:-6px}
+#tuner .ears i{position:absolute;bottom:0;width:4px;height:78px;background:#bbb;border-radius:2px;transform-origin:bottom center}
+#tuner .ears i:first-child{transform:rotate(-32deg);animation:earL 1.4s ease-in-out infinite}
+#tuner .ears i:last-child{transform:rotate(32deg);animation:earR 1.4s ease-in-out infinite}
+#tuner .ears i::after{content:'';position:absolute;top:-6px;left:-3px;width:10px;height:10px;border-radius:50%;background:#ddd}
+#tuner b{font-family:'VT323',monospace;font-size:34px;letter-spacing:.14em;color:#f5d000;text-shadow:3px 3px 0 #000;animation:blink 1s steps(2) infinite}
+@keyframes bars{to{background-position:-200% 0}}
+@keyframes flick{50%{filter:brightness(1.35) contrast(1.2)}}
+@keyframes knob{to{transform:rotate(360deg)}}
+@keyframes earL{50%{transform:rotate(-12deg)}}
+@keyframes earR{50%{transform:rotate(48deg)}}
+@keyframes blink{50%{opacity:.35}}
 </style>
 </head>
 <body>
@@ -1270,13 +1291,14 @@
   // The player announces tuning / on-air: channel changes hold the static until the new channel is really playing,
   // program changes that weren't pre-rolled get a "stay tuned" card instead of YouTube's loading spinner.
   let cutPending=false;
-  document.addEventListener('nv:tuning',e=>{if(e.detail?.behind){cutPending=true;clearTimeout(osdTimer);$('osd').classList.add('show');tuckBanner();return}if(e.detail?.kind==='channel'){holdStatic=true;$('videoBox').classList.add('tuning');zap()}else if(!e.detail?.primed){clearTimeout(bumperTimer);bumperTimer=setTimeout(()=>{$('videoBox').classList.add('tuning');$('bumperTitle').textContent=$('watchTitle').textContent;$('bumper').classList.add('show')},200)}});
-  document.addEventListener('nv:onair',()=>{holdStatic=false;staticUntil=0;$('videoBox').classList.remove('tuning');clearTimeout(bumperTimer);$('bumper').classList.remove('show');if(cutPending){cutPending=false;zap();showBanner();clearTimeout(osdTimer);osdTimer=setTimeout(()=>$('osd').classList.remove('show'),3000)}});
+  document.addEventListener('nv:tuning',e=>{if(e.detail?.behind){cutPending=true;clearTimeout(osdTimer);$('osd').classList.add('show');showBanner();clearTimeout(bannerTimer);tuner(true);return}if(e.detail?.kind==='channel'){holdStatic=true;$('videoBox').classList.add('tuning');zap()}else if(!e.detail?.primed){clearTimeout(bumperTimer);bumperTimer=setTimeout(()=>{$('videoBox').classList.add('tuning');$('bumperTitle').textContent=$('watchTitle').textContent;$('bumper').classList.add('show')},200)}});
+  document.addEventListener('nv:onair',()=>{holdStatic=false;staticUntil=0;$('videoBox').classList.remove('tuning');clearTimeout(bumperTimer);$('bumper').classList.remove('show');if(cutPending){cutPending=false;tuner(false);zap();showBanner();clearTimeout(osdTimer);osdTimer=setTimeout(()=>$('osd').classList.remove('show'),3000)}});
 
   // OSD + info banner, like a cable box
   let osdTimer=null,bannerTimer=null,lastChannel='';
   function showBanner(){$('banner').classList.remove('tucked');$('watchPanel').classList.add('squeeze');clearTimeout(bannerTimer);bannerTimer=setTimeout(tuckBanner,5000)}
-  function tuckBanner(){if($('banner').contains(document.activeElement)){bannerTimer=setTimeout(tuckBanner,2000);return}$('banner').classList.add('tucked');$('watchPanel').classList.remove('squeeze');$('osd').classList.remove('show')}
+  function tuner(on){let t=document.getElementById('tuner');if(!t&&on){t=document.createElement('div');t.id='tuner';t.setAttribute('aria-hidden','true');t.innerHTML='<div class="set"><div class="ears"><i></i><i></i></div><div class="screen"></div></div><b>TUNING IN…</b>';$('watchPanel').append(t)}t?.classList.toggle('show',!!on)}
+  function tuckBanner(){if(cutPending){bannerTimer=setTimeout(tuckBanner,1000);return}if($('banner').contains(document.activeElement)){bannerTimer=setTimeout(tuckBanner,2000);return}$('banner').classList.add('tucked');$('watchPanel').classList.remove('squeeze');$('osd').classList.remove('show')}
   function onTune(){
     if($('watchOverlay').hidden){lastChannel='';return}
     const label=$('watchChannel').textContent,m=label.match(/CH\s+(\d+)\s*·\s*(.*)/);
