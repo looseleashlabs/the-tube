@@ -991,7 +991,7 @@
   $('closeOptions').onclick=closeOptions;
   // The TV app's Back button calls this: close whatever is open (a menu, the show, the browse strip) and report true;
   // false means the guide is already at its top level, so the app itself should exit.
-  if(!/wv/.test(navigator.userAgent)){
+  if(!/\bwv\b/.test(navigator.userAgent)){
     // Browsers skip history entries a page adds before you've pressed anything, so the guard entry is added again on
     // the first remote press (and after every Back it catches). Two guard entries deep, one stray Back never leaves.
     history.pushState({nvGuard:true},'');
