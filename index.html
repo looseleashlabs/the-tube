@@ -943,7 +943,11 @@
   // The TV app's Back button calls this: close whatever is open (a menu, the show, the browse strip) and report true;
   // false means the guide is already at its top level, so the app itself should exit.
   if(!/wv/.test(navigator.userAgent)){
+    // Browsers skip history entries a page adds before you've pressed anything, so the guard entry is added again on
+    // the first remote press (and after every Back it catches). Two guard entries deep, one stray Back never leaves.
     history.pushState({nvGuard:true},'');
+    const armGuard=()=>{removeEventListener('keydown',armGuard,true);removeEventListener('click',armGuard,true);history.pushState({nvGuard:true},'')};
+    addEventListener('keydown',armGuard,true);addEventListener('click',armGuard,true);
     let leaveArmed=0;addEventListener('popstate',()=>{if(window.nvBack()){history.pushState({nvGuard:true},'');return}if(Date.now()-leaveArmed<3000){history.back();return}leaveArmed=Date.now();toast('Press Back again to leave The Tube');history.pushState({nvGuard:true},'')});
   }
   function toast(text){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');t.style.cssText='position:fixed;left:50%;bottom:12%;transform:translateX(-50%);z-index:99;padding:14px 26px;background:#10206f;border:3px solid #f5d000;color:#f5d000;font:700 24px/1.2 sans-serif;letter-spacing:.04em;box-shadow:0 6px 24px #000a';document.body.append(t)}t.textContent=text;t.hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>{t.hidden=true},3000)}
