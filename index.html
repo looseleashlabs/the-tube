@@ -242,7 +242,8 @@
 #tuner{position:absolute;left:50%;top:40%;z-index:6;transform:translate(-50%,-50%) scale(.9);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;display:grid;justify-items:center;gap:14px}
 #tuner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 #tuner .set{position:relative;width:190px;height:140px;background:#5a3b22;border:5px solid #2b1a0e;border-radius:18px;box-shadow:8px 8px 0 #000a;padding:14px 50px 14px 14px}
-#tuner .set::after{content:'';position:absolute;right:14px;top:22px;width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#d9c08a,#7a5a2a);box-shadow:0 38px 0 -4px #b89a5a;animation:knob 1.6s steps(6) infinite}
+#tuner .set::after{content:'';position:absolute;right:14px;top:22px;width:24px;height:24px;border-radius:50%;background:linear-gradient(#2b1a0e,#2b1a0e) 50% 2px/3px 9px no-repeat,radial-gradient(circle at 40% 35%,#d9c08a,#7a5a2a);animation:knob 1.6s steps(6) infinite}
+#tuner .set::before{content:'';position:absolute;right:17px;top:62px;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#cdb27a,#6d5024)}
 #tuner .screen{width:100%;height:100%;border-radius:14px/24px;background:linear-gradient(90deg,#c0c0c0 0 14.3%,#c0c000 0 28.6%,#00c0c0 0 42.9%,#00c000 0 57.1%,#c000c0 0 71.4%,#c00000 0 85.7%,#0000c0 0);background-size:200% 100%;animation:bars 1.1s linear infinite,flick .18s steps(2) infinite;box-shadow:inset 0 0 18px #000c}
 #tuner .ears{position:absolute;left:50%;top:-6px}
 #tuner .ears i{position:absolute;bottom:0;width:4px;height:78px;background:#bbb;border-radius:2px;transform-origin:bottom center}
