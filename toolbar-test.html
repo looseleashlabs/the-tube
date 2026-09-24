@@ -1,6 +1,33 @@
 <!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The Tube – one setting</title>
-<body style="margin:0;background:#10206f;color:#fff;font:34px/1.4 sans-serif;padding:60px 80px">
-<h1 style="color:#f5d000;margin-top:0">One setting for The Tube</h1>
-<p>In the Firefox panel that's open on the left, turn <b>off</b> the switch for<br><b>Enhanced Tracking Protection</b> on this site.</p>
-<p style="color:#9fd">That lets the guide's players see your YouTube Premium. Other sites stay protected.</p>
+<title>Start-speed bench</title>
+<style>body{margin:0;background:#10206f;color:#fff;font:22px monospace}#box{position:fixed;right:20px;top:20px;width:640px;height:360px;background:#000;overflow:hidden}
+#box>div{transform-origin:0 0}#log{padding:16px;white-space:pre}</style>
+<div id="box"></div><div id="log">loading…</div>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+const VIDS=['LXb3EKWsInQ','aqz-KE-bpKQ','dQw4w9WgXcQ','9bZkp7q19f0','kJQP7kiw5Fk','OPf0YbXqDm0'];
+const SIZES={s240:[426,240],s720:[1280,720],s2160:[3840,2160]};
+const out=[];const log=t=>{out.push(t);document.getElementById('log').textContent=out.join('\n')};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let vi=0;const nextVid=()=>VIDS[vi++%VIDS.length];
+function makePlayer(size,opts={}){const box=document.getElementById('box');box.innerHTML='';const [w,h]=SIZES[size];
+  const shell=document.createElement('div');shell.style.width=w+'px';shell.style.height=h+'px';shell.style.transform=`scale(${640/w})`;const host=document.createElement('div');shell.append(host);box.append(shell);
+  return new Promise(res=>{const p=new YT.Player(host,{host:'https://www.youtube.com',width:'100%',height:'100%',videoId:opts.videoId,playerVars:{playsinline:1,rel:0,iv_load_policy:3,fs:0,disablekb:1,autoplay:opts.autoplay?1:0,mute:1,start:opts.start||0,origin:location.origin},
+    events:{onReady:()=>res(p),onStateChange:e=>p._on&&p._on(e.data)}})})}
+const untilPlaying=(p,t0,limit=30000)=>new Promise(res=>{let done=false;const fin=v=>{if(!done){done=true;res(v)}};p._on=s=>{if(s===1)fin(Date.now()-t0)};setTimeout(()=>fin(null),limit)});
+const fmt=ms=>ms==null?' FAIL':(ms/1000).toFixed(1).padStart(5)+'s';
+async function run(){
+  for(const size of Object.keys(SIZES)){
+    // 1 cold: new player that autoplays
+    let t0=Date.now(),v=nextVid();let p;const cold=new Promise(async res=>{p=await makePlayer(size,{videoId:v,autoplay:true,start:120});res()});
+    await cold;const ms1=await untilPlaying(p,t0);p.destroy();await sleep(1500);
+    // 2 warm: existing player, loadVideoById
+    p=await makePlayer(size,{});await sleep(1500);t0=Date.now();const w=untilPlaying(p,t0);p.loadVideoById({videoId:nextVid(),startSeconds:120});const ms2=await w;p.destroy();await sleep(1500);
+    // 3 cued: cue ahead, then play
+    p=await makePlayer(size,{});p.cueVideoById({videoId:nextVid(),startSeconds:120});await sleep(5000);t0=Date.now();const c=untilPlaying(p,t0);p.playVideo();const ms3=await c;p.destroy();await sleep(1500);
+    log(`${size.padEnd(6)} cold${fmt(ms1)}   warm${fmt(ms2)}   cued${fmt(ms3)}`);
+  }
+  log('done');
+}
+window.onYouTubeIframeAPIReady=()=>{log('size   cold        warm        cued');run()};
+</script>
