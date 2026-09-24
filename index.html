@@ -59,6 +59,9 @@
     .button:active,.pill.active{border-color:#0b1060 #9aa6ff #9aa6ff #0b1060}
     .button.primary,.pill.active{background:linear-gradient(#ffe45c,var(--gold-deep));color:#1a1000;text-shadow:none;border-color:#fff5b8 #6b5200 #6b5200 #fff5b8}
     .button:disabled{opacity:.45}
+    /* the open list of a dropdown is drawn by the browser; without this it gets white text on a white menu */
+    select option{background:#141d78;color:#f4f4ff;text-shadow:none}
+    select option:checked{background:#ffd92e;color:#1a1000}
     .button.rec-on{background:linear-gradient(#ff5a4f,#b3140c);border-color:#ffb3ad #5a0500 #5a0500 #ffb3ad}
 
     /* ── top half: preview monitor + promo box ─────────────── */
