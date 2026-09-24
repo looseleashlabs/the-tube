@@ -269,7 +269,7 @@
   <div class="browse-bar" id="browseBar" aria-live="polite"></div>
   <div class="banner" id="banner">
     <div class="watch-head"><strong id="watchChannel">CHANNEL 001</strong><small id="watchLive">JOINING THE PROGRAM IN PROGRESS</small></div>
-    <div class="watch-controls"><span class="watch-title" id="watchTitle">Loading program…</span><button class="button" id="prevChannel" type="button">◀ CH</button><button class="button" id="nextProgram" type="button">Next program</button><button class="button" id="nextChannel" type="button">CH ▶</button><button class="button primary" id="back" type="button">Guide</button><span class="watch-message" id="watchMessage">YouTube playback remains in its official player.</span></div>
+    <div class="watch-controls"><span class="watch-title" id="watchTitle">Loading program…</span><button class="button" id="prevChannel" type="button">◀ CH</button><button class="button" id="nextProgram" type="button">Next program</button><button class="button" id="nextChannel" type="button">CH ▶</button><button class="button primary" id="back" type="button" hidden>Guide</button><span class="watch-message" id="watchMessage">YouTube playback remains in its official player.</span></div>
   </div>
 </div></div>
 <div class="overlay" id="signinOverlay" hidden><div class="settings signin" role="dialog" aria-modal="true" aria-labelledby="signinTitle"><h2 id="signinTitle">Sign in with your phone</h2><p>On your phone or computer, go to</p><div class="signin-url mono" id="signinUrl">google.com/device</div><p>and enter this code:</p><div class="signin-code mono" id="signinCode">· · · ·</div><p class="mono" id="signinStatus" role="status"></p><button class="button" id="cancelSignin" type="button">Cancel</button></div></div>
@@ -444,7 +444,11 @@
   let ytResolve;const ytReady=new Promise(res=>ytResolve=res);if(window.YT?.Player)ytResolve();
   const decks=[...Array(DECKS)].map((_,i)=>({i,player:null,ready:null,shell:null,mode:'idle',role:null,videoId:null,startAt:0,primed:false,seq:0,armTimer:null}));
   let onAir=null,airPoll=null,preloadTimer=null,refreshTimer=null,doneMarked=null,lastResumeSave=0,tuneSeq=0;
-  const activeDecks=()=>decks.slice(0,state.preloadNeighbors?DECKS:2);
+  // Android TV boxes have one or two hardware video decoders. Every loaded YouTube player holds one, and when they run
+  // out the box takes the decoder back from whichever player has it (the show on air pauses every few seconds). So on
+  // Android only two players exist, and the next program is "cued" (thumbnail + position, no decoder) instead of pre-rolled.
+  const LITE=/Android/i.test(navigator.userAgent);
+  const activeDecks=()=>decks.slice(0,!LITE&&state.preloadNeighbors?DECKS:2);
   const emit=(name,detail)=>document.dispatchEvent(new CustomEvent(name,{detail}));
   function deckPlayer(d){
     if(d.ready)return d.ready;
@@ -496,7 +500,7 @@
     if(old&&old!==d){
       old.shell.classList.remove('on-air');old.player?.mute();
       // the channel you just left is the likeliest one to come back to, so keep it parked unless it had finished
-      if(old.mode==='ending'){old.mode='idle';old.primed=false;old.videoId=null;old.role=null;old.player?.stopVideo()}else{park(old);old.role='back'}
+      if(old.mode==='ending'||LITE){old.mode='idle';old.primed=false;old.videoId=null;old.role=null;old.player?.stopVideo()}else{park(old);old.role='back'}
     }
     resetWatchClock();doneMarked=null;state.playerErrors=0;startWatchClock(d.videoId);emit('nv:onair');
     clearTimeout(preloadTimer);preloadTimer=setTimeout(preloadAll,2500);
@@ -515,13 +519,13 @@
   function preloadAll(){
     if(onAir===null||decks[onAir].mode!=='air'||$('watchOverlay').hidden)return;
     const want=[],next=upcoming();if(next)want.push({role:'next',p:next});
-    if(state.preloadNeighbors)for(const [role,dir] of [['up',1],['down',-1]]){const c=neighbor(dir,true),p=c&&positionAt(c);if(p&&!want.some(w=>w.p.video.id===p.video.id))want.push({role,p,channelId:c.id})}
+    if(state.preloadNeighbors&&!LITE)for(const [role,dir] of [['up',1],['down',-1]]){const c=neighbor(dir,true),p=c&&positionAt(c);if(p&&!want.some(w=>w.p.video.id===p.video.id))want.push({role,p,channelId:c.id})}
     const pool=activeDecks().filter(d=>d.i!==onAir&&d.mode!=='arming'),claimed=new Set();
     for(const w of want){const d=pool.find(x=>!claimed.has(x)&&(x.mode==='standby'||x.mode==='preload')&&x.videoId===w.p.video.id);if(!d)continue;claimed.add(d);w.deck=d;d.role=w.role;
       if(w.role!=='next'&&d.mode==='standby'&&Math.abs((d.player.getCurrentTime?.()||0)-w.p.offset)>5)d.player.seekTo(w.p.offset,true)} // stay near live; paused decks stay paused
     let delay=0;for(const w of want){if(w.deck)continue;const d=pool.find(x=>!claimed.has(x));if(!d)break;claimed.add(d);d.role=w.role;setTimeout(()=>preroll(d,w.p,w.role),delay);delay+=1500}
   }
-  function preroll(d,p,role){deckPlayer(d).then(()=>{if(d.mode==='arming'||d.mode==='air'||d.role!==role)return;d.mode='preload';d.primed=false;d.videoId=p.video.id;d.startAt=Math.floor(p.offset);d.player.mute();d.player.loadVideoById({videoId:p.video.id,startSeconds:d.startAt})})}
+  function preroll(d,p,role){deckPlayer(d).then(()=>{if(d.mode==='arming'||d.mode==='air'||d.role!==role)return;d.primed=false;d.videoId=p.video.id;d.startAt=Math.floor(p.offset);d.player.mute();if(LITE){d.player.cueVideoById({videoId:p.video.id,startSeconds:d.startAt});d.mode='standby';d.primed=true;return}d.mode='preload';d.player.loadVideoById({videoId:p.video.id,startSeconds:d.startAt})})}
   // What airs after the current program, without committing to it (used for pre-rolling and for advancing).
   function upcoming(){
     const vids=state.playingVideos;if(!vids?.length)return null;
@@ -940,8 +944,9 @@
   // false means the guide is already at its top level, so the app itself should exit.
   if(!/wv/.test(navigator.userAgent)){
     history.pushState({nvGuard:true},'');
-    addEventListener('popstate',()=>{if(window.nvBack()){history.pushState({nvGuard:true},'')}else history.back()});
+    let leaveArmed=0;addEventListener('popstate',()=>{if(window.nvBack()){history.pushState({nvGuard:true},'');return}if(Date.now()-leaveArmed<3000){history.back();return}leaveArmed=Date.now();toast('Press Back again to leave The Tube');history.pushState({nvGuard:true},'')});
   }
+  function toast(text){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');t.style.cssText='position:fixed;left:50%;bottom:12%;transform:translateX(-50%);z-index:99;padding:14px 26px;background:#10206f;border:3px solid #f5d000;color:#f5d000;font:700 24px/1.2 sans-serif;letter-spacing:.04em;box-shadow:0 6px 24px #000a';document.body.append(t)}t.textContent=text;t.hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>{t.hidden=true},3000)}
   window.nvBack=()=>{const open=['lineupOverlay','optionsOverlay','groupOverlay','listOverlay','settingsOverlay','signinOverlay','watchOverlay'].some(id=>!$(id).hidden);const inHeader=zones().some(z=>z.includes(document.activeElement));if(!open&&!inHeader)return false;if(inHeader&&!open){selectedRow()?.focus();return true}(document.activeElement||document.body).dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));return true};
   // ── Household sync ──────────────────────────────────────────────────────────────────────────────────
   // Everything you build (channels, lists, VCR, favorites, watched history, resume points) lives in one small file in
@@ -959,9 +964,9 @@
   state.tombstones=syncMeta.tombstones=syncMeta.tombstones||{};
   const newest=(obj,n)=>Object.fromEntries(Object.entries(obj||{}).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,n));
   const maxMerge=(a={},b={})=>{const out={...a};for(const [k,v] of Object.entries(b))if(!(k in out)||Number(v)>Number(out[k]))out[k]=v;return out};
-  function settingsObj(){return {favorites:[...state.favorites].sort(),topN:state.topN,quality:state.quality,preloadNeighbors:state.preloadNeighbors,genreChannels:state.genreChannels,hiddenGenres:[...state.hiddenGenres].sort(),
+  function settingsObj(){return {favorites:[...state.favorites].sort(),topN:state.topN,genreChannels:state.genreChannels,hiddenGenres:[...state.hiddenGenres].sort(),
     vcr:{passes:state.vcr.passes,since:state.vcr.since,autoTop:state.vcr.autoTop},history:{counts:state.historyCounts,names:state.historyNames,import:state.historyImport,lastWatched:state.lastWatched},discover:state.discover,discoverHidden:[...(state.discoverHidden||[])].sort(),pendingSubs:state.pendingSubs||[],shuffle:state.shuffle||{}}}
-  function applySettings(x){state.favorites=new Set(x.favorites||[]);Object.assign(state,{topN:x.topN??state.topN,quality:x.quality??state.quality,preloadNeighbors:x.preloadNeighbors??state.preloadNeighbors,genreChannels:x.genreChannels??state.genreChannels,hiddenGenres:x.hiddenGenres||[]});
+  function applySettings(x){state.favorites=new Set(x.favorites||[]);Object.assign(state,{topN:x.topN??state.topN,genreChannels:x.genreChannels??state.genreChannels,hiddenGenres:x.hiddenGenres||[]});
     Object.assign(state.vcr,{passes:x.vcr?.passes||{},since:x.vcr?.since||{},autoTop:x.vcr?.autoTop??state.vcr.autoTop});
     if(x.discover!==undefined)state.discover=x.discover;if(x.pendingSubs){const all=new Map([...(state.pendingSubs||[]),...x.pendingSubs].map(p=>[p.youtubeId,p]));state.pendingSubs=[...all.values()].filter(p=>!state.subs.some(s=>s.youtubeId===p.youtubeId))}if(x.shuffle)state.shuffle=x.shuffle;if(x.discoverHidden)state.discoverHidden=x.discoverHidden;if(x.history){state.lastWatched=x.history.lastWatched||state.lastWatched;state.historyCounts=x.history.counts||{};state.historyNames=x.history.names||{};state.historyImport=x.history.import||null}}
   // A settings edit is detected by comparing against what was last synced, so no setting needs its own timestamp.
@@ -1266,6 +1271,7 @@
   // full screen and doesn't support this, so it's skipped there.
   const goFullScreen=()=>{if(document.fullscreenElement||/\bwv\b/.test(navigator.userAgent)||!document.documentElement.requestFullscreen)return;document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})};
   document.addEventListener('keydown',goFullScreen,true);document.addEventListener('click',goFullScreen,true);
+  document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&!$('watchOverlay').hidden)closeWatch()});
 
   // Remote: CH up/down surf, any other key wakes the banner
   document.addEventListener('keydown',e=>{
