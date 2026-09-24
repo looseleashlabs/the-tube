@@ -806,6 +806,14 @@
   $('cancelSignin').onclick=closeSignin;
   // On launch: if this device is already signed in, renew quietly and load the guide — no button press needed.
   loadTvConfig().then(async()=>{if(await renewAccess()){$('status').textContent='Signed in · loading your channels…';sync()}});
+  // ?ch=020 (or ?ch=for%20you, by name) tunes straight in once that channel has something on — for Home Assistant,
+  // voice commands and bookmarks. The parameter is dropped afterwards so a reload doesn't re-tune.
+  {const want=(new URLSearchParams(location.search).get('ch')||'').trim().toLowerCase();
+    if(want){const t0=Date.now(),pool=()=>{try{return [...visible(),...groupChannels(),...listChannels(),...creators()]}catch{return []}};
+      const find=()=>pool().find(c=>channelNo(c)===want.padStart(3,'0')||c.name.toLowerCase()===want);
+      const attempt=()=>{const c=find();if(c&&positionAt(c)){const u=new URL(location.href);u.searchParams.delete('ch');history.replaceState(history.state,'',u);tune(c.id);return}
+        if(Date.now()-t0<90000)setTimeout(attempt,1000);else $('status').textContent=`Couldn't find channel ${want}`};
+      setTimeout(attempt,1200)}}
   // ── Saved lineup: the guide appears instantly from last time, then refreshes quietly in the background ──────
   const LINEUP_STORE='nostalgiavision-lineup-v1',VIDEO_FRESH=3*HOUR,GROUP_FRESH=12*HOUR;
   let lineupTimer=null,renderTimer=null;
