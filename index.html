@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>The Tube</title>
-  <link rel="preconnect" href="https://www.youtube.com">
+  <link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://www.youtube.com">
   <link rel="preconnect" href="https://i.ytimg.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1273,7 +1274,7 @@
   // In a browser on the TV (Chrome/Firefox), the address bar eats the top of the screen. Pages may only go full screen
   // in response to a key press or click, so the first remote press does it. The TV app's web view ("wv") is already
   // full screen and doesn't support this, so it's skipped there.
-  const goFullScreen=()=>{if(document.fullscreenElement||/\bwv\b/.test(navigator.userAgent)||!document.documentElement.requestFullscreen)return;document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})};
+  const goFullScreen=()=>{if(document.fullscreenElement||matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches||/\bwv\b/.test(navigator.userAgent)||!document.documentElement.requestFullscreen)return;document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})};
   document.addEventListener('keydown',goFullScreen,true);document.addEventListener('click',goFullScreen,true);
   document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&!$('watchOverlay').hidden)closeWatch()});
 
