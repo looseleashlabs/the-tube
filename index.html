@@ -485,7 +485,10 @@
   // same video just un-pauses (after nudging it to the live position) — that's the near-instant path.
   async function take(p,kind){
     const pool=activeDecks().filter(d=>d.i!==onAir),sacrifice=kind==='channel'?'next':'down';
-    const d=pool.find(x=>x.primed&&x.videoId===p.video.id)||pool.find(x=>x.mode==='idle')||pool.find(x=>x.role===sacrifice)||pool.find(x=>x.mode!=='arming')||pool[0];
+    // On a TV box, starting a second player means setting up the video decoder from scratch (slow there), so a new
+    // channel loads into the player that's already on air, behind the static, unless a spare already holds it.
+    const ready=pool.find(x=>x.primed&&x.videoId===p.video.id);
+    const d=ready||(LITE&&onAir!==null&&decks[onAir].player?decks[onAir]:null)||pool.find(x=>x.mode==='idle')||pool.find(x=>x.role===sacrifice)||pool.find(x=>x.mode!=='arming')||pool[0];
     const primed=d.primed&&d.videoId===p.video.id,seq=++tuneSeq;d.seq=seq;
     if(kind==='channel'&&onAir!==null)decks[onAir].player?.mute();
     emit('nv:tuning',{kind,primed});
