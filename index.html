@@ -230,7 +230,10 @@
       .guide{max-height:70vh}.guide-head,.guide-row{grid-template-columns:150px minmax(0,1fr)}
       .toolbar-note,.clock{display:none}header{flex-wrap:wrap}
     }
-  </style>
+  #warp{position:fixed;inset:0;z-index:998;pointer-events:none;opacity:0;background:repeating-linear-gradient(0deg,#fff3 0 2px,#0000 2px 4px),repeating-radial-gradient(circle at 37% 61%,#888 0 1px,#111 1px 3px),#222;mix-blend-mode:normal}
+#warp.go{animation:warp .55s ease-out}
+@keyframes warp{0%{opacity:1;transform:scaleY(1) skewX(0)}25%{opacity:1;transform:scaleY(1.04) skewX(8deg);filter:blur(1px)}55%{opacity:.95;transform:scaleY(.03) skewX(-6deg);filter:brightness(2.4)}100%{opacity:0;transform:scaleY(1)}}
+</style>
 </head>
 <body>
 <div class="crt" aria-hidden="true"></div>
@@ -1278,7 +1281,11 @@
   // full screen and doesn't support this, so it's skipped there.
   const goFullScreen=()=>{if(document.fullscreenElement||matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches||/\bwv\b/.test(navigator.userAgent)||!document.documentElement.requestFullscreen)return;document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})};
   document.addEventListener('keydown',goFullScreen,true);document.addEventListener('click',goFullScreen,true);
-  document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&!$('watchOverlay').hidden)$('back').click()}); // the hidden Guide button runs closeWatch
+  // Back from a show: a quick burst of static and a picture roll covers the moment the browser drops out of full screen
+  // and the guide comes back, like flipping the set to another input.
+  function warp(){if(!prefs.static)return;let w=document.getElementById('warp');if(!w){w=document.createElement('div');w.id='warp';w.setAttribute('aria-hidden','true');document.body.append(w)}
+    w.classList.remove('go');void w.offsetWidth;w.classList.add('go');hiss(420)}
+  document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&!$('watchOverlay').hidden){warp();$('back').click()}}); // the hidden Guide button runs closeWatch
   // ?debug on the address shows remote keys and Back handling on screen (for testing on the TV)
   if(/[?&]debug/.test(location.search)){const pre=document.createElement('pre');pre.style.cssText='position:fixed;left:8px;top:8px;z-index:999;margin:0;padding:6px;background:#000c;color:#0f0;font:16px monospace;pointer-events:none;max-width:60vw;white-space:pre-wrap';document.body.append(pre);const lines=[];const log=t=>{lines.push(new Date().toLocaleTimeString()+' '+t);pre.textContent=lines.slice(-14).join('\n')};
     addEventListener('keydown',e=>log('key '+e.key+' on '+(document.activeElement?.id||document.activeElement?.tagName)),true);addEventListener('popstate',()=>log('popstate'),true);
