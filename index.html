@@ -860,9 +860,12 @@
   $('groupList').onchange=e=>{const id=e.target.dataset?.id;if(!id)return;if(e.target.checked)draft.ids.add(id);else draft.ids.delete(id);$('groupCount').textContent=`${draft.ids.size} picked`};
   $('groupSearch').oninput=()=>{draft.limit=150;renderGroupList()};
   $('groupPick').onchange=e=>{const g=state.groups.find(x=>x.id===e.target.value);
-    if(g){const keep=[...draft.ids];draft.editId=g.id;draft.fromGenre=null;draft.ids=new Set([...g.creatorIds,...keep]);$('groupName').value=g.name;$('saveGroup').textContent='Save channel';$('deleteGroup').hidden=false}
-    else{draft.editId=null;$('saveGroup').textContent='Make channel';$('deleteGroup').hidden=true}
-    renderGroupList()};
+    // Switching away from an existing channel loads the other channel's own creators. Only a new, unsaved channel's
+    // picks carry over into an existing one (the "add this creator to that channel" case).
+    const carry=draft.editId?[]:[...draft.ids];
+    if(g){draft.editId=g.id;draft.fromGenre=null;draft.ids=new Set([...g.creatorIds,...carry]);$('groupName').value=g.name;$('saveGroup').textContent='Save channel';$('deleteGroup').hidden=false}
+    else{draft.editId=null;draft.fromGenre=null;draft.ids=new Set();$('groupName').value='';$('saveGroup').textContent='Make channel';$('deleteGroup').hidden=true}
+    $('deleteGroup').textContent='Delete channel';$('groupSearch').value='';draft.limit=150;renderGroupList()};
   function saveGroup(){
     const name=$('groupName').value.trim()||'My channel';if(!draft.ids.size){$('groupStatus').textContent='Tick at least one creator.';return}
     let id=draft.editId;
