@@ -1056,7 +1056,7 @@
     $('lineupTitle').textContent=`CH ${channelNo(ch)} · ${ch.name}`;
     $('lineupNote').textContent=`${members.length} creator${members.length===1?'':'s'}${members.length>ch.members.length?` · the ${ch.members.length} marked ▶ are on the schedule right now`:''}`;
     $('lineupList').innerHTML=members.map(c=>{
-      const v=c.videos?.[0],thumb=v?`<img src="https://i.ytimg.com/vi/${encodeURIComponent(v.id)}/mqdefault.jpg" alt="" loading="lazy">`:/^https://ytd*.(ggpht|googleusercontent).com//.test(c.thumb||'')?`<img class="avatar" src="${clean(c.thumb)}" alt="" loading="lazy">`:'<span class="lineup-blank">▶</span>',g=genreOf(c);
+      const v=c.videos?.[0],thumb=v?`<img src="https://i.ytimg.com/vi/${encodeURIComponent(v.id)}/mqdefault.jpg" alt="" loading="lazy">`:/^https:\/\/yt\d*\.(ggpht|googleusercontent)\.com\//.test(c.thumb||'')?`<img class="avatar" src="${clean(c.thumb)}" alt="" loading="lazy">`:'<span class="lineup-blank">▶</span>',g=genreOf(c);
       return `<div class="lineup-row" data-id="${clean(c.id)}">${thumb}<div class="lineup-info"><strong>${airing.has(c.id)?'▶ ':''}${clean(c.name)}</strong><span>${clean(whyOnChannel(ch,c))}${g?` · ${clean(genreName(g))}`:''}</span>${v?`<small>Latest: ${clean(v.title)}</small>`:''}</div>${ch.discovery?`<button class="button" type="button" data-hide="${clean(c.id)}">Not interested</button>`:''}</div>`;
     }).join('')||'<p class="mono">Nobody here yet.</p>';
     $('lineupOverlay').hidden=false;($('lineupList').querySelector('button')||$('closeLineup')).focus();
