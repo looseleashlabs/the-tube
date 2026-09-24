@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Tube</title>
+  <link rel="preconnect" href="https://www.youtube.com">
+  <link rel="preconnect" href="https://i.ytimg.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;700&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    /* ── 1990s cable guide palette ─────────────────────────── */
+    :root{
+      --ink:#f4f4ff; --shadow:#000;
+      --grid:#1a2380; --grid-deep:#0d1455; --cell:#2b3bb3; --cell-hi:#6d7ef0; --cell-lo:#101660;
+      --airing:#3a4fd6; --seen:#232c7a;
+      --gold:#ffd92e; --gold-deep:#c79a00; --cyan:#6ef2ff; --red:#e8322b; --osd:#3dff5a;
+      --bar:#05071f;
+      font-family:'Archivo Narrow','Arial Narrow',Arial,sans-serif;color:var(--ink);background:#000;color-scheme:dark
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:#000;overflow:hidden}
+    button,input,select{font:inherit}button{cursor:pointer}
+    .mono{font-family:'VT323',monospace}
+
+    /* ── CRT glass over everything ─────────────────────────── */
+    .crt{position:fixed;inset:0;pointer-events:none;z-index:50}
+    .crt::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.28) 0 1px,transparent 1px 3px);mix-blend-mode:multiply}
+    .crt::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 58%,rgba(0,0,0,.55) 100%);animation:flicker 6s infinite steps(1)}
+    @keyframes flicker{0%,100%{opacity:1}47%{opacity:.93}48%{opacity:1}83%{opacity:.96}}
+    body.no-crt .crt{display:none}
+
+    .app{height:100vh;display:grid;grid-template-rows:auto minmax(200px,44vh) auto minmax(0,1fr) auto;gap:10px;padding:16px clamp(14px,2.4vw,40px) 0;background:radial-gradient(ellipse at 50% -10%,#2a36b8 0,#0b1150 45%,#03051c 100%)}
+    .txt,h1,h2,.slot-title,.channel-name,.channel-no{text-shadow:2px 2px 0 var(--shadow)}
+
+    /* ── header: logo + big clock ──────────────────────────── */
+    header{display:flex;justify-content:space-between;align-items:center;gap:20px}
+    .logo{display:flex;align-items:center;gap:14px}
+    h1{margin:0;font-size:clamp(30px,3.4vw,54px);font-weight:700;font-style:italic;letter-spacing:-.01em;line-height:.9;text-transform:uppercase;transform:skewX(-6deg)}
+    h1 .n{color:#fff}h1 strong{background:linear-gradient(180deg,#fff7b0 0,var(--gold) 45%,#ff8a1f 55%,#ff3d7f 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(3px 3px 0 #000)}
+    .stripes{display:flex;flex-direction:column;gap:3px;width:46px}.stripes i{height:5px;display:block}.stripes i:nth-child(1){background:#ff3d7f}.stripes i:nth-child(2){background:#ff8a1f}.stripes i:nth-child(3){background:var(--gold)}.stripes i:nth-child(4){background:var(--cyan)}
+    .tagline{font-size:15px;letter-spacing:.18em;color:var(--cyan);margin:6px 0 0;text-transform:uppercase}
+    .header-right{display:flex;align-items:center;gap:18px}
+    .header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .status{font-size:20px;color:var(--gold);min-width:120px;text-align:right}
+    .clock{font-family:'VT323',monospace;font-size:clamp(40px,4vw,64px);line-height:.8;color:var(--gold);text-shadow:3px 3px 0 #000;background:#000a;border:2px solid #fff3;padding:6px 12px 2px}
+
+    /* ── chunky cable-box buttons ──────────────────────────── */
+    .button,.pill,select{background:linear-gradient(#4a58d0,#2b37a0);border:2px solid;border-color:#9aa6ff #0b1060 #0b1060 #9aa6ff;color:#fff;padding:6px 14px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:15px;text-shadow:1px 1px 0 #000;border-radius:0}
+    .button:hover,.pill:hover,.button:focus-visible,.pill:focus-visible{background:linear-gradient(#6674ea,#3a47bb);outline:none}
+    .button:active,.pill.active{border-color:#0b1060 #9aa6ff #9aa6ff #0b1060}
+    .button.primary,.pill.active{background:linear-gradient(#ffe45c,var(--gold-deep));color:#1a1000;text-shadow:none;border-color:#fff5b8 #6b5200 #6b5200 #fff5b8}
+    .button:disabled{opacity:.45}
+    .button.rec-on{background:linear-gradient(#ff5a4f,#b3140c);border-color:#ffb3ad #5a0500 #5a0500 #ffb3ad}
+
+    /* ── top half: preview monitor + promo box ─────────────── */
+    .player-card{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:14px;min-height:0}
+    .poster{position:relative;height:100%;min-height:0;background:#000;border:6px solid #1c1c22;border-radius:18px/22px;box-shadow:0 0 0 2px #444,inset 0 0 40px #000,0 10px 30px #0009;overflow:hidden;display:grid;place-items:center}
+    .poster img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:.8;filter:saturate(1.25) contrast(1.05)}
+    .poster::after{content:'';position:absolute;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at 30% 20%,#ffffff1a,transparent 45%),repeating-linear-gradient(0deg,#0003 0 1px,transparent 1px 3px)}
+    .poster-mark{position:relative;z-index:1;font-family:'VT323',monospace;font-size:64px;color:var(--osd);text-shadow:0 0 12px var(--osd)}
+    .poster.previewing>img,.poster.previewing .poster-mark,.poster.previewing .poster-osd,.poster.previewing::after{display:none}
+    /* the full-screen CRT glass sits over everything, so it steps aside whenever a YouTube player is showing */
+    body:has(.poster.previewing) .crt,body:has(#watchOverlay:not([hidden])) .crt{display:none}
+    .preview-frame{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:2}
+    .poster-osd{position:absolute;top:12px;right:16px;z-index:4;font-family:'VT323',monospace;font-size:38px;color:var(--osd);text-shadow:0 0 8px var(--osd),2px 2px 0 #000;pointer-events:none}
+
+    .detail{display:flex;flex-direction:column;min-width:0;min-height:0;background:linear-gradient(180deg,#2331a8,#141d78);border:3px solid;border-color:#8b98ff #070b40 #070b40 #8b98ff;padding:14px 18px;overflow:hidden}
+    .eyebrow{align-self:flex-start;background:var(--red);color:#fff;font-weight:700;font-size:16px;letter-spacing:.08em;padding:2px 10px;text-transform:uppercase;box-shadow:3px 3px 0 #000}
+    .detail h2{font-size:clamp(24px,2.5vw,40px);line-height:1.02;margin:10px 0 6px;color:var(--gold);text-transform:uppercase;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .detail p{margin:3px 0;font-size:18px;text-shadow:1px 1px 0 #000}
+    .detail .times{font-family:'VT323',monospace;font-size:26px;color:var(--cyan)}
+    .detail .preview-status{font-family:'VT323',monospace;font-size:19px;color:#b9c2ff;letter-spacing:.04em}
+    .detail-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+    .nearby-label{font-family:'VT323',monospace;font-size:18px;color:var(--gold);margin:8px 0 4px;letter-spacing:.06em}
+    .nearby{display:flex;gap:6px;min-width:0;overflow-x:auto;flex:none}
+    .nearby button{flex:1 0 110px;min-width:110px;height:62px;position:relative;overflow:hidden;border:2px solid #000;background:#000;color:#fff;padding:0;text-align:left;border-radius:0}
+    .nearby button.active{outline:3px solid var(--gold);outline-offset:-3px}
+    .nearby img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(1.2)}
+    .nearby span{position:absolute;left:0;right:0;bottom:0;padding:2px 5px;background:#000c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:700}
+    .nearby small{color:var(--osd);font-family:'VT323',monospace;font-size:16px;margin-right:4px}
+
+    /* ── toolbar ───────────────────────────────────────────── */
+    .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .packs{display:flex;gap:6px}
+    .search{background:#000;border:2px solid;border-color:#070b40 #8b98ff #8b98ff #070b40;color:var(--osd);font-family:'VT323',monospace;font-size:22px;padding:3px 10px;min-width:180px;flex:1;max-width:340px}
+    .search::placeholder{color:#3a8a4a}
+    .toolbar-note{margin-left:auto;font-family:'VT323',monospace;font-size:20px;color:#b9c2ff}
+
+    /* ── the grid ──────────────────────────────────────────── */
+    .guide{min-height:0;overflow-y:auto;background:var(--grid-deep);border:3px solid #000;scrollbar-color:var(--cell) #000}
+    .guide-head,.guide-row{display:grid;grid-template-columns:minmax(170px,250px) minmax(0,1fr)}
+    .guide-head{position:sticky;top:0!important;z-index:5;height:40px;background:var(--bar);border-bottom:3px solid var(--gold)}
+    .head-label{padding:6px 12px;color:var(--gold);font-family:'VT323',monospace;font-size:26px;line-height:1}
+    .time-head{position:relative}
+    .time-head span{position:absolute;top:6px;color:var(--gold);font-family:'VT323',monospace;font-size:28px;line-height:1;transform:translateX(8px)}
+    .guide-row{height:66px;cursor:pointer;background:var(--grid);border-top:2px solid #000;outline:none}
+    .channel-cell{display:flex;align-items:center;gap:10px;padding:6px 12px;min-width:0;background:linear-gradient(180deg,#3140c0,#1b2694);border-right:3px solid #000;border-top:2px solid #8b98ff66}
+    .channel-no{font-family:'VT323',monospace;font-size:36px;line-height:1;color:var(--gold);min-width:48px}
+    .channel-icon{display:none}
+    .channel-info{min-width:0;flex:1}
+    .channel-name{display:block;font-weight:700;font-size:20px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.05}
+    .channel-sub{display:block;color:var(--cyan);font-size:13px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .schedule{position:relative;overflow:hidden}
+    .slot{position:absolute;top:3px;bottom:3px;background:var(--cell);border:2px solid;border-color:var(--cell-hi) var(--cell-lo) var(--cell-lo) var(--cell-hi);padding:6px 10px;overflow:hidden;text-align:left}
+    .slot.airing{background:var(--airing)}
+    .slot.seen-today{background:var(--seen);border-color:#3b4596 #0a0f45 #0a0f45 #3b4596}
+    .slot.seen-today .slot-title{color:#a8b0e6}
+    .slot-title{font-weight:700;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .slot-time{display:none}
+    .slot-status{font-family:'VT323',monospace;font-size:16px;color:var(--cyan);line-height:1;margin-top:3px;white-space:nowrap}
+    .slot.seen-today .slot-status{color:#8b93c9}
+    .guide-row.selected .channel-cell,.guide-row:focus .channel-cell{background:linear-gradient(180deg,#fff27a,var(--gold-deep))}
+    .guide-row.selected .channel-cell *,.guide-row:focus .channel-cell *{color:#1a1000;text-shadow:none}
+    .guide-row.selected .slot.airing,.guide-row:focus .slot.airing{background:var(--gold);border-color:#fff7c2 #7a5c00 #7a5c00 #fff7c2}
+    .guide-row.selected .slot.airing *,.guide-row:focus .slot.airing *{color:#1a1000;text-shadow:none}
+    .now-line{position:absolute;top:0;bottom:0;width:3px;background:var(--red);z-index:2;pointer-events:none;box-shadow:0 0 6px var(--red)}
+    .placeholder{padding:18px 14px;font-family:'VT323',monospace;font-size:22px;color:#b9c2ff}
+    .empty{padding:30px;font-family:'VT323',monospace;font-size:26px;color:var(--gold)}
+    .more{width:100%;border:0;border-top:3px solid #000;background:var(--bar);color:var(--gold);font-family:'VT323',monospace;font-size:24px;padding:10px}
+    .more:hover{background:#1a2380}
+
+    /* ── bottom crawl ──────────────────────────────────────── */
+    .crawl{display:flex;align-items:stretch;height:40px;margin:0 calc(-1*clamp(14px,2.4vw,40px));background:#000;border-top:3px solid var(--gold);overflow:hidden}
+    .crawl-tag{flex:none;display:flex;align-items:center;padding:0 14px;background:var(--red);font-weight:700;font-size:18px;letter-spacing:.06em;text-transform:uppercase;text-shadow:1px 1px 0 #000}
+    .crawl-track{flex:1;overflow:hidden;position:relative;display:flex;align-items:center}
+    .crawl-text{white-space:nowrap;font-family:'VT323',monospace;font-size:27px;color:var(--ink);padding-left:100%;animation:crawl var(--crawl-time,60s) linear infinite}
+    .crawl-text b{color:var(--gold);font-weight:400}
+    .crawl-text i{color:var(--cyan);font-style:normal}
+    @keyframes crawl{to{transform:translateX(-100%)}}
+    .hint{display:none}
+
+    /* ── fullscreen "watching TV" ──────────────────────────── */
+    .overlay{position:fixed;inset:0;z-index:10;display:grid;place-items:center}
+    .overlay[hidden]{display:none}
+    #watchOverlay{background:radial-gradient(ellipse at 30% 25%,#2a36b8,#0b1150 55%,#03051c)}
+    /* Squeeze-back: when the banner, channel number or browse strip appears, the show shrinks into the top-left corner
+       (like cable squeezing the credits for a promo) so nothing is ever drawn over the YouTube player. */
+    #watchOverlay .video-box{transform-origin:0 0;transition:transform .35s ease,box-shadow .35s}
+    .watch-panel.squeeze .video-box{transform:translate(3vw,4vh) scale(.66);box-shadow:0 0 0 4px #000,10px 10px 0 6px #000a}
+    .watch-panel.browsing .video-box{transform:translate(3vw,3vh) scale(.6);box-shadow:0 0 0 4px #000,10px 10px 0 6px #000a}
+    /* while static or the stay-tuned card is up, the outgoing show is hidden rather than covered. The incoming player
+       stays nominally visible (just transparent): YouTube will not start playback in a player that is hidden. */
+    .video-box.tuning .deck.on-air{visibility:hidden}
+    .watch-panel{position:absolute;inset:0;display:block;outline:none}
+    .video-box{position:absolute;inset:0;background:#000;display:grid;place-items:center;overflow:hidden}
+    .video-box iframe{width:100%;height:100%;border:0}
+    .deck{position:absolute;inset:0;opacity:0;pointer-events:none;overflow:hidden}.deck.on-air{opacity:1;pointer-events:auto}
+    .video-box.canvas .deck iframe{position:absolute;left:50%;top:50%;width:var(--cw);height:var(--ch);transform:translate(-50%,-50%) scale(var(--cs));transform-origin:center}
+    .osd{position:absolute;top:5vh;right:3vw;max-width:26vw;text-align:right;z-index:4;font-family:'VT323',monospace;font-size:clamp(56px,8vw,120px);line-height:.85;color:var(--osd);text-shadow:0 0 14px var(--osd),4px 4px 0 #000;pointer-events:none;opacity:0;transition:opacity .25s}
+    .osd.show{opacity:1;transition:none}
+    .osd small{display:block;font-size:.3em;line-height:1.05;text-align:right;color:#d8ffd8;margin-top:6px;overflow-wrap:anywhere}
+    .static{position:absolute;inset:0;z-index:3;width:100%;height:100%;pointer-events:none;opacity:0;image-rendering:pixelated}
+    .static.show{opacity:1}
+    .bumper{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:0 10vw;text-align:center;background:radial-gradient(ellipse at 50% 30%,#2a36b8,#0b1150 60%,#03051c);opacity:0;pointer-events:none;transition:opacity .15s}
+    .bumper.show{opacity:1}
+    .bumper-logo{font-size:clamp(34px,5vw,72px);font-weight:700;font-style:italic;text-transform:uppercase;transform:skewX(-6deg);text-shadow:3px 3px 0 #000}.bumper-logo b{color:var(--gold)}
+    .bumper small{font-family:'VT323',monospace;font-size:clamp(22px,2.4vw,36px);color:var(--cyan);letter-spacing:.2em;text-transform:uppercase}
+    .bumper strong{font-size:clamp(26px,3.4vw,52px);text-transform:uppercase;color:#fff;text-shadow:3px 3px 0 #000;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .banner{position:absolute;left:3vw;right:3vw;bottom:3vh;z-index:5;background:linear-gradient(180deg,#2331a8f2,#0d1455f2);border:3px solid;border-color:#8b98ff #070b40 #070b40 #8b98ff;box-shadow:6px 6px 0 #000a;padding:12px 16px;transform:translateY(0);transition:transform .35s,opacity .35s}
+    .banner.tucked{transform:translateY(140%);opacity:0}
+    .browse-bar{position:absolute;left:3vw;right:3vw;bottom:4vh;z-index:6;display:grid;grid-template-columns:1fr 1fr 1.35fr 1fr 1fr;gap:1.2vw;align-items:end;transform:translateY(130%);opacity:0;transition:transform .25s,opacity .25s;pointer-events:none}
+    .watch-panel.browsing .browse-bar{transform:none;opacity:1}
+    .watch-panel.browsing .banner{opacity:0;pointer-events:none}
+    .browse-card{position:relative;aspect-ratio:16/9;background:#000;border:3px solid;border-color:#8b98ff #070b40 #070b40 #8b98ff;box-shadow:5px 5px 0 #000a;overflow:hidden;opacity:.72}
+    .browse-card.focus{border-color:var(--gold);outline:3px solid var(--gold);opacity:1}
+    .browse-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    .browse-info{position:absolute;left:0;right:0;bottom:0;padding:.5vw .7vw;background:linear-gradient(0deg,#0d1455f5 55%,transparent);display:flex;flex-direction:column;gap:2px}
+    .browse-info strong{font-size:clamp(13px,1.2vw,22px);text-transform:uppercase;text-shadow:2px 2px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .browse-info span{font-size:clamp(11px,.95vw,17px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .browse-info .browse-no,.browse-info small{font-family:'VT323',monospace;font-size:clamp(14px,1.2vw,22px);color:var(--gold)}
+    .browse-card.focus .browse-info small{color:var(--cyan)}
+    .watch-head{display:flex;align-items:baseline;justify-content:space-between;gap:15px}
+    .watch-head strong{font-family:'VT323',monospace;font-size:32px;color:var(--gold);font-weight:400;text-shadow:2px 2px 0 #000}
+    .watch-head small{font-family:'VT323',monospace;font-size:22px;color:var(--cyan)}
+    .watch-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}
+    .watch-title{font-size:26px;font-weight:700;flex:1;min-width:240px;text-transform:uppercase;text-shadow:2px 2px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .watch-message{font-family:'VT323',monospace;color:#b9c2ff;font-size:19px;max-width:260px}
+
+    /* ── settings ──────────────────────────────────────────── */
+    #settingsOverlay,#listOverlay,#signinOverlay,#groupOverlay,#optionsOverlay{background:#000c}.options{width:min(420px,90vw)}.options-list{display:flex;flex-direction:column;gap:8px;margin:10px 0 14px}.options-list .button{text-align:left;font-size:17px;padding:9px 14px}
+    .button:focus-visible,.pill:focus-visible,.search:focus-visible,.options-list .button:focus{outline:3px solid var(--gold);outline-offset:2px}.group-list{max-height:34vh;overflow:auto;background:#0009;border:2px solid;border-color:#070b40 #8b98ff #8b98ff #070b40;padding:4px 10px;margin-top:6px}.group-item{margin:6px 0!important;text-transform:none!important;font-weight:500!important}.group-item small{margin-left:auto;font-family:'VT323',monospace;font-size:17px;color:var(--cyan)}.signin{text-align:center}.signin-url{font-size:clamp(30px,3vw,48px);color:var(--cyan);text-shadow:2px 2px 0 #000}.signin-code{font-size:clamp(56px,7vw,110px);letter-spacing:.12em;color:var(--gold);text-shadow:4px 4px 0 #000;margin:4px 0 10px}#signinStatus{font-size:22px;color:var(--osd);min-height:1.2em}.settings .search{max-width:none;width:100%}#listStatus{font-size:21px;color:var(--osd);min-height:1.2em}
+    .settings{width:min(560px,94vw);max-height:92vh;overflow:auto;background:linear-gradient(180deg,#2331a8,#141d78);border:3px solid;border-color:#8b98ff #070b40 #070b40 #8b98ff;box-shadow:8px 8px 0 #000;padding:22px}
+    .settings h2{margin:0 0 10px;color:var(--gold);text-transform:uppercase}
+    .settings p{line-height:1.4;font-size:17px}.settings a{color:var(--cyan)}
+    .settings label{display:block;margin:16px 0 6px;font-weight:700;text-transform:uppercase;color:var(--gold)}
+    .settings select{width:100%}
+    .check{display:flex!important;align-items:center;gap:10px;color:var(--ink)!important}
+    .warning{background:var(--red);border:3px solid #000;padding:8px 12px;font-weight:700;box-shadow:4px 4px 0 #000}
+
+    @media (max-height:640px) and (min-width:760px){
+      .app{grid-template-rows:auto minmax(150px,36vh) auto minmax(0,1fr) auto;gap:6px;padding-top:8px}
+      h1{font-size:26px}.tagline{display:none}.stripes{width:30px}.stripes i{height:3px}
+      .clock{font-size:34px;padding:3px 8px 0}.status{font-size:15px;min-width:0}
+      .button,.pill,select{font-size:12px;padding:4px 9px}
+      .detail{padding:8px 12px}.eyebrow{font-size:12px}.detail h2{font-size:20px;margin:6px 0 2px;-webkit-line-clamp:1}
+      .detail p{font-size:14px}.detail .times{font-size:19px}
+      #detailSeen,#previewStatus,.nearby-label,.nearby{display:none}
+      .detail-actions{margin-top:6px;gap:5px}.detail-actions .button:not(.primary){display:none} /* the rest live in → Options */
+      .detail-actions::after{content:'→ OPTIONS';font-family:'VT323',monospace;font-size:17px;color:var(--gold);align-self:center;margin-left:6px}
+      .poster-osd{font-size:26px;top:6px;right:10px}
+      .search{font-size:17px;padding:1px 8px}.toolbar-note{font-size:15px}
+      .guide-head{height:30px}.head-label{font-size:20px;padding:4px 10px}.time-head span{font-size:21px;top:4px}
+      .guide-row{height:46px}.channel-cell{padding:3px 10px;gap:8px}.channel-no{font-size:26px;min-width:36px}
+      .channel-name{font-size:15px}.channel-sub{font-size:10px}
+      .slot{padding:3px 8px}.slot-title{font-size:14px}.slot-status{display:none}
+      .crawl{height:28px}.crawl-tag{font-size:13px;padding:0 10px}.crawl-text{font-size:20px}
+    }
+    @media(max-width:950px){
+      body{overflow:auto}.app{height:auto;min-height:100vh;grid-template-rows:auto auto auto auto auto}
+      .player-card{grid-template-columns:1fr}.poster{aspect-ratio:4/3;height:auto}
+      .guide{max-height:70vh}.guide-head,.guide-row{grid-template-columns:150px minmax(0,1fr)}
+      .toolbar-note,.clock{display:none}header{flex-wrap:wrap}
+    }
+  </style>
+</head>
+<body>
+<div class="crt" aria-hidden="true"></div>
+<div class="app">
+  <header>
+    <div class="logo"><div class="stripes" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div><h1><span class="n">The </span><strong>Tube</strong></h1><p class="tagline">Your creators · 24 hours · Channel 3</p></div></div>
+    <div class="header-right">
+      <div class="header-actions"><button class="button primary" id="connect" type="button">Connect YouTube</button><button class="button" id="disconnect" type="button" hidden>Disconnect</button><button class="button" id="settingsButton" type="button">Setup</button><span class="status mono" id="status" role="status">Sample channels</span></div>
+      <div class="clock" id="clock" aria-hidden="true">--:--</div>
+    </div>
+  </header>
+  <div class="warning" id="fileWarning" hidden>Sign-in needs the local launcher. Open <strong>Start TV Guide.cmd</strong> instead of this HTML file.</div>
+  <section class="player-card" id="playerCard" aria-label="Selected channel">
+    <div class="poster" id="poster"><span class="poster-mark" id="posterMark">✦</span><span class="poster-osd" id="posterOsd"></span></div>
+    <div class="detail">
+      <span class="eyebrow" id="detailChannel">CHANNEL 001 · FOR YOU</span>
+      <h2 id="detailTitle">A channel that's already playing</h2>
+      <p class="times" id="detailTime">Choose a channel to tune in</p>
+      <p id="detailNext">Your creator lineup will fill this guide after Google sign-in.</p>
+      <p id="detailSeen" class="preview-status">NOT SEEN IN THIS GUIDE</p>
+      <p class="preview-status" id="previewStatus">Hover over a channel for a muted preview.</p>
+      <div class="detail-actions"><button class="button primary" id="tuneButton" type="button">Tune in</button><button class="button" id="seenButton" type="button">Mark seen today</button><button class="button" id="favoriteButton" type="button">☆ Favorite</button><button class="button" id="recButton" type="button" hidden>○ Record</button><button class="button" id="newListButton" type="button">＋ List</button><button class="button" id="groupButton" type="button">＋ Channel</button><button class="button" id="hideGroupButton" type="button" hidden>Delete channel</button><button class="button" id="deleteListButton" type="button" hidden>Delete list</button><button class="button" id="stopPreviewButton" type="button" hidden>Stop preview</button></div>
+      <div class="nearby-label">&lt;&lt; CHANNEL SURF &gt;&gt;</div>
+      <div class="nearby" id="nearby" aria-label="Nearby channels"></div>
+    </div>
+  </section>
+  <div class="toolbar"><div class="packs"><button class="pill active" data-mode="featured" type="button">On Air</button><button class="pill" data-mode="favorites" type="button">Favorites</button><button class="pill" data-mode="all" type="button">All creators</button></div><input class="search" id="search" type="search" placeholder="FIND A CREATOR_" aria-label="Find a creator"><span class="toolbar-note" id="countNote">A smaller lineup up front; everyone is searchable.</span></div>
+  <section class="guide" aria-label="Time-based TV guide"><div class="guide-head"><div class="head-label" id="guideDay">TODAY</div><div class="time-head" id="timeHead"></div></div><div id="rows"></div><button class="more" id="loadMore" type="button" hidden>Show more creators</button></section>
+  <div class="crawl" aria-hidden="true"><span class="crawl-tag">On now</span><div class="crawl-track"><span class="crawl-text" id="crawl">STAY TUNED ✦ YOUR CREATORS ARE ON THE AIR ✦</span></div></div>
+  <p class="hint">↑ ↓ preview · Enter tune in · ← → surf while watching.</p>
+</div>
+<div class="overlay" id="watchOverlay" hidden><div class="watch-panel" id="watchPanel" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="watchTitle">
+  <div class="video-box" id="videoBox"></div>
+  <canvas class="static" id="staticCanvas" width="160" height="90"></canvas>
+  <div class="bumper" id="bumper" aria-hidden="true"><span class="bumper-logo">The <b>Tube</b></span><small>Up next</small><strong id="bumperTitle"></strong><small>Stay tuned</small></div>
+  <div class="osd" id="osd"></div>
+  <div class="browse-bar" id="browseBar" aria-live="polite"></div>
+  <div class="banner" id="banner">
+    <div class="watch-head"><strong id="watchChannel">CHANNEL 001</strong><small id="watchLive">JOINING THE PROGRAM IN PROGRESS</small></div>
+    <div class="watch-controls"><span class="watch-title" id="watchTitle">Loading program…</span><button class="button" id="prevChannel" type="button">◀ CH</button><button class="button" id="nextProgram" type="button">Next program</button><button class="button" id="nextChannel" type="button">CH ▶</button><button class="button primary" id="back" type="button">Guide</button><span class="watch-message" id="watchMessage">YouTube playback remains in its official player.</span></div>
+  </div>
+</div></div>
+<div class="overlay" id="signinOverlay" hidden><div class="settings signin" role="dialog" aria-modal="true" aria-labelledby="signinTitle"><h2 id="signinTitle">Sign in with your phone</h2><p>On your phone or computer, go to</p><div class="signin-url mono" id="signinUrl">google.com/device</div><p>and enter this code:</p><div class="signin-code mono" id="signinCode">· · · ·</div><p class="mono" id="signinStatus" role="status"></p><button class="button" id="cancelSignin" type="button">Cancel</button></div></div>
+<div class="overlay" id="optionsOverlay" hidden><div class="settings options" role="dialog" aria-modal="true" aria-labelledby="optionsTitle"><h2 id="optionsTitle">Options</h2><div class="options-list" id="optionsList"></div><button class="button" id="closeOptions" type="button">Close</button></div></div>
+<div class="overlay" id="groupOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="groupTitle"><h2 id="groupTitle">Creator channel</h2><label for="groupPick">Channel</label><select id="groupPick"></select><label for="groupName">Name</label><input class="search" id="groupName" placeholder="TECH NIGHT_" autocomplete="off"><label for="groupSearch">Creators · <span id="groupCount">0 picked</span></label><input class="search" id="groupSearch" placeholder="FILTER_" autocomplete="off"><div class="group-list" id="groupList"></div><p class="mono" id="groupStatus" role="status"></p><div class="detail-actions"><button class="button primary" id="saveGroup" type="button">Make channel</button><button class="button" id="cancelGroup" type="button">Cancel</button></div></div></div>
+<div class="overlay" id="listOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="listTitle"><h2 id="listTitle">New list channel</h2><p>Everything a creator posted on a day (or a stretch of days) that you haven't finished yet. Each video drops off once you've watched 90% of it here.</p><label for="listCreator">Creator</label><input class="search" id="listCreator" list="creatorOptions" placeholder="START TYPING A NAME_" autocomplete="off"><datalist id="creatorOptions"></datalist><label class="check"><input type="checkbox" id="listAuto"> Keep recording new uploads</label><div id="autoOpts" hidden><label for="listKeep">Erase each video after</label><select id="listKeep"><option value="24">24 hours</option><option value="72">3 days</option><option value="168">7 days</option><option value="336">14 days</option></select></div><div id="dayOpts"><label for="listFrom">Posted on</label><input class="search" type="date" id="listFrom"><label for="listTo">Through (optional)</label><input class="search" type="date" id="listTo"></div><label class="check"><input type="checkbox" id="listShorts"> Include Shorts</label><p id="listStatus" class="mono" role="status"></p><div class="detail-actions"><button class="button primary" id="createList" type="button">Make channel</button><button class="button" id="cancelList" type="button">Cancel</button></div></div></div>
+<div class="overlay" id="settingsOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><h2 id="settingsTitle">Cable box setup</h2><label class="check"><input type="checkbox" id="crtToggle" checked> CRT scanlines</label><label class="check"><input type="checkbox" id="staticToggle" checked> Static + click on channel change</label><label for="qualitySelect">Picture</label><select id="qualitySelect"><option value="2160">Sharpest (asks YouTube for up to 4K)</option><option value="1080">HD (up to 1080p)</option><option value="auto">Let YouTube decide</option></select><label class="check"><input type="checkbox" id="preloadToggle" checked> Pre-load channels above and below (turn off if the TV stutters)</label><label class="check"><input type="checkbox" id="genreToggle" checked> Genre channels (built from YouTube's topic tags)</label><button class="button" id="unhideGenres" type="button">Unhide genre channels</button><label for="vcrAuto">VCR auto-records my top</label><select id="vcrAuto"><option value="0">Nobody (only ● Record)</option><option value="3">3 creators</option><option value="5">5 creators</option><option value="10">10 creators</option></select><h2 style="margin-top:22px">For You channel</h2><p>Mix recent videos from your most opened creators in this guide. YouTube's standard API does not expose watch history.</p><label for="topCount">How many creators in the mix?</label><select id="topCount"><option value="5">Top 5</option><option value="12">Top 12</option><option value="25">Top 25</option><option value="50">Top 50</option></select><p>Favorite a creator to move them toward the front. To use your viewing history, get a YouTube activity JSON export from <a href="https://takeout.google.com/" target="_blank" rel="noopener noreferrer">Google Takeout</a>, then import its <strong>watch-history.json</strong> file here. The file is read locally in this browser and is not uploaded to the guide server.</p><label for="historyFile">Import watch-history.json</label><input id="historyFile" type="file" accept=".json,application/json"><p id="historyImportStatus" role="status">No history file imported.</p><button class="button primary" id="closeSettings" type="button">Done</button></div></div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+(() => {
+  'use strict';
+  const CLIENT_ID='281507401999-42pljhi6bkenvgm13cdke1ehdg7q6ris.apps.googleusercontent.com';
+  const STORE='your-channels-prototype-v1', HOUR=3600000, MINUTE=60000, HORIZON=2*HOUR,MIN_PROGRAM=181, ANCHOR=Date.UTC(2026,0,1);
+  const $=id=>document.getElementById(id);
+  const SAMPLE=[
+    {id:'sample-a',name:'Creator Channel',videos:[{id:'M7lc1UVf-VE',title:'YouTube player demo',duration:1344}]},
+    {id:'sample-b',name:'Discovery Channel',videos:[{id:'M7lc1UVf-VE',title:'A sample scheduled program',duration:1344}]}
+  ];
+  let saved={};try{saved=JSON.parse(localStorage.getItem(STORE)||'{}')}catch{}
+  const state={subs:[],token:null,counts:saved.counts||{},seen:saved.seen||{},historyCounts:saved.historyCounts||{},historyNames:saved.historyNames||{},historyImport:saved.historyImport||null,favorites:new Set(saved.favorites||[]),topN:Number(saved.topN)||12,mixCache:saved.mixCache||null,lists:saved.lists||[],done:saved.done||{},vcr:{passes:{},recs:{},since:{},autoTop:5,...saved.vcr},preloadNeighbors:saved.preloadNeighbors??true,groups:saved.groups||[],hiddenGenres:saved.hiddenGenres||[],genreChannels:saved.genreChannels??true,printed:saved.printed||{},synced:false,quality:saved.quality||'2160',unplayable:new Set(),mode:'featured',query:'',limit:60,selectedId:'for-you',playingId:null,player:null,pending:null,playerErrors:0};
+  let lastNearby='',lastSchedule='',previewId=null,previewTimer=null,previewPlayer=null,previewReady=false,previewVideoId=null,previewRequest=null,watchedVideoId=null,watchTimer=null,watchRemaining=30000,watchStartedAt=0;
+  const snapshot=()=>JSON.stringify({...saved,counts:state.counts,seen:state.seen,historyCounts:state.historyCounts,historyNames:state.historyNames,historyImport:state.historyImport,favorites:[...state.favorites],topN:state.topN,mixCache:state.mixCache,lists:state.lists,done:state.done,vcr:state.vcr,preloadNeighbors:state.preloadNeighbors,groups:state.groups,hiddenGenres:state.hiddenGenres,genreChannels:state.genreChannels,printed:state.printed,quality:state.quality});
+  // Storage can be full, blocked or missing on a TV WebView; trim seen history and retry once, never throw.
+  const persist=()=>{try{localStorage.setItem(STORE,snapshot())}catch{try{state.seen=Object.fromEntries(Object.entries(state.seen).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,5000));localStorage.setItem(STORE,snapshot())}catch{}}};
+  const seenToday=id=>Number(state.seen[id]||0)>=new Date().setHours(0,0,0,0);
+  const seenLabel=id=>seenToday(id)?'SEEN TODAY':state.seen[id]?'SEEN BEFORE':'NOT SEEN IN THIS GUIDE';
+  const markSeen=id=>{if(!id||seenToday(id))return;state.seen[id]=Date.now();persist();renderGuide()};
+  function pauseWatchClock(){if(watchTimer){clearTimeout(watchTimer);watchTimer=null;watchRemaining=Math.max(0,watchRemaining-(Date.now()-watchStartedAt))}}
+  function resetWatchClock(){pauseWatchClock();watchedVideoId=null;watchRemaining=30000}
+  function startWatchClock(id){if(watchedVideoId!==id){resetWatchClock();watchedVideoId=id}if(!id||seenToday(id)||watchTimer)return;watchStartedAt=Date.now();watchTimer=setTimeout(()=>{watchTimer=null;watchRemaining=0;markSeen(id)},watchRemaining)}
+  const clean=s=>String(s).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+  const time=t=>new Date(t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+  const duration=s=>{const m=String(s||'').match(/^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);return m?Math.max(60,(Number(m[1]||0)*86400+Number(m[2]||0)*3600+Number(m[3]||0)*60+Number(m[4]||0))):900};
+  function videoIdFromUrl(raw){try{const url=new URL(raw);const host=url.hostname.toLowerCase();const id=host==='youtu.be'?url.pathname.slice(1):host==='youtube.com'||host==='www.youtube.com'||host==='m.youtube.com'?url.searchParams.get('v'):null;return /^[A-Za-z0-9_-]{11}$/.test(id||'')?id:null}catch{return null}}
+  async function importWatchHistory(file){if(!file)return;const note=$('historyImportStatus');note.textContent='Reading watch history locally…';try{const parsed=JSON.parse(await file.text()),records=Array.isArray(parsed)?parsed:parsed?.items;if(!Array.isArray(records))throw new Error('Expected the watch-history.json array from Google Takeout.');const imported=new Map(),counts={},names={};let watched=0;for(const row of records){if(!/^Watched\b/i.test(String(row?.title||'')))continue;const id=videoIdFromUrl(row.titleUrl);if(!id)continue;watched++;const when=Date.parse(row.time);if(Number.isFinite(when)&&when>0)imported.set(id,Math.max(when,imported.get(id)||0));for(const subtitle of row.subtitles||[]){const name=String(subtitle.name||'').trim().toLowerCase();if(name)names[name]=(names[name]||0)+1;const channelId=String(subtitle.url||'').match(/\/channel\/(UC[A-Za-z0-9_-]+)/)?.[1];if(channelId)counts[channelId]=(counts[channelId]||0)+1}}if(!watched)throw new Error('No watched YouTube videos with video links were found in this file.');state.historyCounts=counts;state.historyNames=names;for(const [id,when] of imported){state.seen[id]=Math.max(when,Number(state.seen[id]||0));state.done[id]=state.done[id]||when}state.done=Object.fromEntries(Object.entries(state.done).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,60000));state.seen=Object.fromEntries(Object.entries(state.seen).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,20000));state.historyImport={count:watched,date:Date.now(),kept:Object.keys(state.seen).length};persist();note.textContent=`Imported ${watched.toLocaleString()} watched entries. Tracking the latest ${state.historyImport.kept.toLocaleString()} video IDs locally.`;renderGuide()}catch(error){note.textContent=`Import failed: ${error.message}`}finally{$('historyFile').value=''}}
+  const creators=()=>state.subs.length?state.subs:SAMPLE;
+  const score=c=>(state.favorites.has(c.id)?100:0)+Math.min(50,Number(state.counts[c.id]||0))*4+Math.log2(1+Math.max(Number(state.historyCounts[c.youtubeId]||0),Number(state.historyNames[c.name.toLowerCase()]||0)))*12;
+  let rankCache=null;
+  const ranked=()=>{const list=creators();if(rankCache&&rankCache.list===list&&rankCache.size===list.length&&Date.now()-rankCache.at<1000)return rankCache.order;const order=list.map((c,i)=>({c,i,s:score(c)})).sort((a,b)=>b.s-a.s||a.i-b.i).map(x=>x.c);rankCache={list,size:list.length,at:Date.now(),order,top:new Map()};return order};
+  const topSet=n=>{ranked();let set=rankCache.top.get(n);if(!set){set=new Set(rankCache.order.slice(0,n));rankCache.top.set(n,set)}return set};
+  // For You is "printed" once per day: after every creator in the mix has loaded, the lineup is frozen so the schedule
+  // stops shifting as uploads arrive or tune-in counts reorder the ranking. Refresh guide or a new Top-N reprints it.
+  const mixKey=()=>`${new Date().toDateString()}|${state.topN}`;
+  const mixChannel=()=>{const base={id:'for-you',name:'For You',subtitle:`Top ${state.topN} creator mix`};if(state.subs.length&&state.mixCache?.key===mixKey()&&state.mixCache.videos?.length)return {...base,videos:spreadCreators(state.mixCache.videos)};const top=ranked().slice(0,state.topN);const items=top.flatMap(c=>(c.videos||[]).filter(v=>v.id).slice(0,3).map(v=>({...v,creator:c.name,creatorId:c.id})));items.sort((a,b)=>hash(a.id)-hash(b.id));items.splice(0,items.length,...spreadCreators(items));if(state.subs.length&&items.length&&top.every(c=>c.loaded||c.error||!c.uploadsPlaylist)){state.mixCache={key:mixKey(),videos:items};persist()}return {...base,videos:items,subtitle:state.subs.length&&state.mixCache?.key!==mixKey()?'Mix is filling…':base.subtitle}};
+  const unseenChannel=()=>({id:'unseen-today',name:'Unseen Today',videos:spreadCreators(mixChannel().videos.filter(v=>!seenToday(v.id))),subtitle:'Starts when you tune in',onDemand:true});
+  const special=id=>id==='for-you'||id==='unseen-today'||id==='vcr'||/^(grp|genre)-/.test(id)||String(id).startsWith('list-');
+  const channelNo=c=>c.no?c.no:c.id==='for-you'?'001':c.id==='unseen-today'?'002':String(creators().indexOf(c)+101);
+  function hash(s){let n=2166136261;for(const ch of s)n=Math.imul(n^ch.charCodeAt(0),16777619);return n>>>0}
+  const byId=id=>/^(grp|genre)-/.test(id)?groupById(id):id==='vcr'?vcrChannel():String(id).startsWith('list-')?listChannels().find(c=>c.id===id):id==='for-you'?mixChannel():id==='unseen-today'?unseenChannel():creators().find(c=>c.id===id);
+  function visible(){const q=state.query.trim().toLowerCase();if(q){const match=creators().filter(c=>c.name.toLowerCase().includes(q));return [...listChannels(),...groupChannels()].filter(c=>c.name.toLowerCase().includes(q)).concat(match.slice(0,state.limit))}const built=[mixChannel(),unseenChannel(),vcrChannel(),...listChannels(),...groupChannels()];if(state.mode==='favorites')return [...built,...ranked().filter(c=>state.favorites.has(c.id))];if(state.mode==='all')return [...built,...creators().slice(0,state.limit)];return [...built,...ranked().slice(0,24)]}
+  const scheduleSig=()=>`${windowStart()}|${visible().map(c=>`${c.id}:${positionAt(c)?.video.id||''}`).join(',')}`;
+  function windowStart(now=Date.now()){return Math.floor(now/(30*MINUTE))*30*MINUTE}
+  function positionAt(channel,at=Date.now()){
+    const vids=(channel?.videos||[]).filter(v=>v.id);if(!vids.length)return null;
+    // On-demand channels (Unseen Today) always start their next program from the top, right now,
+    // instead of a rolling clock whose length changes every time something gets marked seen.
+    if(channel.onDemand){const now=Date.now(),d=Math.max(60,vids[0].duration||900),off=resumeOf(vids[0]);return {videos:vids,index:0,video:vids[0],offset:off,start:now,end:now+(d-off)*1000}}
+    const total=vids.reduce((sum,v)=>sum+Math.max(60,v.duration||900),0);
+    let offset=(((at-ANCHOR)/1000)%total+total)%total;
+    for(let i=0;i<vids.length;i++){const d=Math.max(60,vids[i].duration||900);if(offset<d)return {videos:vids,index:i,video:vids[i],offset,start:at-offset*1000,end:at+(d-offset)*1000};offset-=d}
+    return null;
+  }
+  function timeline(channel,start=windowStart()){
+    const now=Date.now(),end=start+HORIZON;let p=positionAt(channel,start),parts=[];
+    if(!p)return parts;
+    let t=p.start,i=p.index,guard=0;
+    while(t<end&&guard++<80){const v=p.videos[i],d=Math.max(60,v.duration||900)*1000,stop=t+d;
+      if(stop>start){const left=Math.max(start,t),right=Math.min(end,stop);parts.push({video:v,start:t,end:stop,left:(left-start)/HORIZON*100,width:(right-left)/HORIZON*100,airing:t<=now&&now<stop})}
+      t=stop;i=(i+1)%p.videos.length;if(channel.onDemand&&i===0)break;
+    }
+    return parts;
+  }
+  function stopPreview(){clearTimeout(previewTimer);previewTimer=null;previewId=null;previewRequest=null;previewReady=false;previewVideoId=null;previewPlayer?.destroy?.();previewPlayer=null;$('previewFrame')?.remove();$('poster').classList.remove('previewing');$('previewStatus').textContent='Hover over a channel for a muted preview.';$('stopPreviewButton').hidden=true}
+  function wrapPreview(){const frame=$('previewFrame');if(!window.YT?.Player||previewPlayer||!frame)return;previewPlayer=new YT.Player('previewFrame',{events:{onReady:e=>{if(!$('previewFrame')||!previewId)return;previewReady=true;e.target.mute();const request=previewRequest;if(!request)return;if(previewVideoId!==request.videoId){previewVideoId=request.videoId;e.target.loadVideoById({videoId:request.videoId,startSeconds:request.startSeconds})}else e.target.playVideo()},onError:()=>{$('previewStatus').textContent='This channel cannot preview here. Choose another channel.';stopPreview()}}})}
+  async function beginPreview(id){let c=byId(id);if(!c)return;if(!special(c.id)&&!c.loaded&&c.uploadsPlaylist)await loadVideos(c);if(previewId!==id||!$('watchOverlay').hidden||!$('settingsOverlay').hidden)return;c=byId(id);const p=positionAt(c);if(!p){$('previewStatus').textContent='No playable preview for this channel yet.';return}previewRequest={videoId:p.video.id,startSeconds:Math.floor(p.offset)};let frame=$('previewFrame');if(frame){frame.title=`Muted preview: ${p.video.title}`;if(previewPlayer&&previewReady){if(previewVideoId!==p.video.id){previewVideoId=p.video.id;previewPlayer.mute();previewPlayer.loadVideoById(previewRequest)}else previewPlayer.playVideo()}else if(!previewPlayer){previewVideoId=p.video.id;frame.src=`https://www.youtube.com/embed/${encodeURIComponent(p.video.id)}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(location.origin)}&start=${Math.floor(p.offset)}`;wrapPreview()}}else{frame=document.createElement('iframe');frame.id='previewFrame';frame.className='preview-frame';frame.title=`Muted preview: ${p.video.title}`;frame.src=`https://www.youtube.com/embed/${encodeURIComponent(p.video.id)}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(location.origin)}&start=${Math.floor(p.offset)}`;frame.allow='autoplay; encrypted-media; picture-in-picture; web-share';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';previewVideoId=p.video.id;$('poster').append(frame);wrapPreview()}$('poster').classList.add('previewing');$('previewStatus').textContent='Muted preview · nearby channels are ready to select.';$('stopPreviewButton').hidden=false}
+  function queuePreview(id){if(!$('watchOverlay').hidden||!$('settingsOverlay').hidden)return;if(previewId===id&&(previewTimer||previewRequest))return;clearTimeout(previewTimer);previewId=id;state.selectedId=id;renderDetails();document.querySelectorAll('.guide-row').forEach(row=>row.classList.toggle('selected',row.dataset.id===id));previewTimer=setTimeout(()=>{previewTimer=null;beginPreview(id)},180)}
+  function renderNearby(){const items=visible(),at=items.findIndex(c=>c.id===state.selectedId);if(at<0){$('nearby').replaceChildren();return}const nearby=[...new Set([-2,-1,0,1,2].map(offset=>items[(at+offset+items.length)%items.length]?.id))].map(id=>items.find(c=>c.id===id)).filter(Boolean);const nearbyHtml=nearby.map(c=>{const p=positionAt(c);return `<button type="button" class="${c.id===state.selectedId?'active':''}" data-id="${clean(c.id)}" aria-label="Preview ${clean(c.name)}" title="${clean(p?.video.title||c.name)}">${p?.video.id?`<img src="https://i.ytimg.com/vi/${encodeURIComponent(p.video.id)}/mqdefault.jpg" alt="" loading="eager" decoding="async">`:''}<span><small>CH ${channelNo(c)}</small>${clean(c.name)}</span></button>`}).join('');if(nearbyHtml!==lastNearby){lastNearby=nearbyHtml;$('nearby').innerHTML=nearbyHtml}}
+  function renderDetails(){const c=byId(state.selectedId)||mixChannel();const p=positionAt(c);$('detailChannel').textContent=`CHANNEL ${channelNo(c)} · ${c.name.toUpperCase()}`;$('detailTitle').textContent=p?.video.title||'Waiting for this channel’s schedule';$('detailTime').textContent=p?`${time(p.start)}–${time(p.end)} · ${Math.max(1,Math.ceil((p.end-Date.now())/MINUTE))} min left`:'Select or search for a creator';const next=c.onDemand?p?.videos[p.index+1]:p?.videos[(p.index+1)%p.videos.length];$('detailNext').textContent=next?`Up next: ${next.title}`:c.id==='unseen-today'?'You are caught up with this mix today.':c.id==='for-you'?'Connect YouTube to fill your personalized channel.':'Recent uploads load as you browse.';$('detailSeen').textContent=p?seenLabel(p.video.id):'';$('seenButton').hidden=!p;$('seenButton').textContent=p&&seenToday(p.video.id)?'Mark unseen today':'Mark seen today';$('favoriteButton').hidden=special(c.id);$('favoriteButton').textContent=state.favorites.has(c.id)?'★ Favorited':'☆ Favorite';$('tuneButton').disabled=!p;const poster=$('poster'),thumb=p?.video.id?`https://i.ytimg.com/vi/${encodeURIComponent(p.video.id)}/hqdefault.jpg`:'',old=poster.querySelector('img');if(old?.getAttribute('src')!==thumb){old?.remove();if(thumb){const img=document.createElement('img');img.src=thumb;img.alt='';poster.prepend(img)}}$('posterMark').textContent=special(c.id)?'✦':'▶';renderListBits(c,p);renderNearby()}
+  function renderGuide(){const focusedId=document.activeElement?.closest?.('.guide-row')?.dataset.id,start=windowStart(),now=Date.now(),items=visible();$('timeHead').innerHTML=[0,1,2,3].map(i=>`<span style="left:${i*25}%">${clean(time(start+i*30*MINUTE))}</span>`).join('');const marker=(now-start)/HORIZON*100;
+    $('rows').innerHTML=items.map(c=>{const no=channelNo(c),parts=timeline(c,start);const cells=parts.length?parts.map(p=>`<div class="slot ${p.airing?'airing':''} ${seenToday(p.video.id)?'seen-today':''}" style="left:${p.left}%;width:${Math.max(.5,p.width)}%"><div class="slot-title">${clean(p.video.title)}</div><div class="slot-time">${clean(time(p.start))}–${clean(time(p.end))}</div><div class="slot-status">${seenToday(p.video.id)?'✓ SEEN TODAY':state.seen[p.video.id]?'SEEN BEFORE':'NOT SEEN HERE'}</div></div>`).join(''):`<div class="placeholder">${c.isVcr?'Tape is empty · press ● Record on a creator':c.isList?'All caught up ✓ nothing left on this list':c.id==='unseen-today'?'Nothing left unseen today in this mix':c.loaded?'No playable uploads':'Fetching recent uploads…'}</div>`;return `<div class="guide-row ${state.selectedId===c.id?'selected':''}" data-id="${clean(c.id)}" role="button" tabindex="0" aria-label="Tune to ${clean(c.name)}"><div class="channel-cell"><span class="channel-no">${no}</span><span class="channel-icon">${special(c.id)?'✦':'▶'}</span><span class="channel-info"><span class="channel-name">${clean(c.name)}</span><span class="channel-sub">${clean(c.subtitle||(isRecorded(c)?'● Rec':'YouTube creator'))}</span></span></div><div class="schedule">${cells}<div class="now-line" style="left:${marker}%"></div></div></div>`}).join('')||'<div class="empty">No creators match this search.</div>';
+    $('countNote').textContent=state.subs.length?`${state.subs.length} subscribed creators · ${items.filter(c=>!special(c.id)).length} creators in this view`:'Sample lineup · connect YouTube for your channels';$('loadMore').hidden=state.mode!=='all'&& !state.query || state.limit>=creators().length || (state.query&&items.length<state.limit);
+    document.querySelectorAll('.guide-row').forEach(row=>{row.onclick=()=>{state.selectedId=row.dataset.id;renderDetails();tune(row.dataset.id)};row.onfocus=()=>queuePreview(row.dataset.id);row.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();tune(row.dataset.id)}}});if(focusedId)document.querySelector(`.guide-row[data-id="${CSS.escape(focusedId)}"]`)?.focus({preventScroll:true});lastSchedule=scheduleSig();
+    if(state.token){for(const c of items){if(c.isGroup)c.members.forEach(m=>ensureFresh(m,GROUP_FRESH));else if(!special(c.id))ensureFresh(c,VIDEO_FRESH)}}renderDetails();
+  }
+  async function api(path,params,renewed){const url=new URL(`https://www.googleapis.com/youtube/v3/${path}`);for(const [k,v] of Object.entries(params))if(v!==undefined&&v!==null)url.searchParams.set(k,String(v));const r=await fetch(url,{headers:{Authorization:`Bearer ${state.token}`}}),j=await r.json();if(r.status===401&&!renewed&&await renewAccess())return api(path,params,true);if(r.status===401){state.token=null;$('connect').textContent='Reconnect';$('status').textContent='Sign-in expired · press Reconnect';throw new Error('Sign-in expired')}if(!r.ok)throw new Error(j.error?.message||`YouTube API ${r.status}`);return j}
+  async function loadVideos(c){if(!c.uploadsPlaylist||!state.token||c.loaded)return;if(c.error){if(Date.now()-c.errorAt<5*MINUTE)return;c.error=null}if(c.loading)return c.loading;c.loading=(async()=>{try{const list=await api('playlistItems',{part:'snippet,contentDetails',playlistId:c.uploadsPlaylist,maxResults:30});const items=(list.items||[]).map(x=>({id:x.snippet?.resourceId?.videoId,title:x.snippet?.title||'Untitled',published:Date.parse(x.contentDetails?.videoPublishedAt||x.snippet?.publishedAt)||0})).filter(x=>x.id&&x.title!=='Private video'&&x.title!=='Deleted video');if(items.length){const info=await api('videos',{part:'contentDetails,status,snippet',id:items.map(x=>x.id).join(',')});const details=new Map((info.items||[]).map(x=>[x.id,x]));c.videos=items.filter(x=>{const d=details.get(x.id);return d&&d.status?.embeddable!==false&&d.status?.madeForKids!==true&&(d.snippet?.liveBroadcastContent||'none')==='none'&&!/#shorts?/i.test(x.title)}).map(x=>({...x,duration:duration(details.get(x.id)?.contentDetails?.duration)})).filter(x=>x.duration>=MIN_PROGRAM)}else c.videos=[];c.loaded=true;c.loadedAt=Date.now();saveLineup();vcrCapture(c)}catch(e){c.error=e.message;c.errorAt=Date.now();if(state.token)$('status').textContent=`Could not load ${c.name}: ${e.message}`}finally{c.loading=null;scheduleRender()}})();return c.loading}
+  // Refresh the lineup from YouTube. Creators already on screen (from the saved lineup) keep their schedules while
+  // this runs, so the guide never goes blank; only what changed gets fetched.
+  async function sync(){
+    if(!state.token)return;
+    $('status').textContent=state.subs.length?`${state.subs.length} creators · checking for changes…`:'Reading subscriptions…';
+    try{
+      const known=new Map(state.subs.map(c=>[c.id,c])),found=[];let page,pages=0;
+      do{
+        const j=await api('subscriptions',{part:'snippet',mine:'true',maxResults:50,pageToken:page});
+        for(const x of j.items||[]){const id=x.snippet?.resourceId?.channelId;if(!id)continue;const c=known.get(`yt-${id}`)||{id:`yt-${id}`,youtubeId:id,videos:[],loaded:false};c.name=x.snippet?.title||c.name||'Creator';found.push(c)}
+        page=j.nextPageToken;pages++;
+      }while(page&&pages<40);
+      if(state.synced)state.mixCache=null; // pressing Refresh guide reprints today's For You
+      const hadNone=!state.subs.length;state.subs=found;
+      if(hadNone){state.selectedId='for-you';state.query='';$('search').value=''}
+      $('status').textContent=`${found.length} creators · building schedules…`;renderGuide();
+      // the uploads playlist and YouTube's topic tags (for genre channels) come from the same 1-unit call
+      const missing=found.filter(c=>!c.uploadsPlaylist||!c.topics);
+      for(let i=0;i<missing.length;i+=50){
+        const group=missing.slice(i,i+50),j=await api('channels',{part:'contentDetails,topicDetails',id:group.map(x=>x.youtubeId).join(',')}),index=new Map(group.map(x=>[x.youtubeId,x]));
+        for(const x of j.items||[]){const c=index.get(x.id);if(!c)continue;c.uploadsPlaylist=x.contentDetails?.relatedPlaylists?.uploads;c.topics=(x.topicDetails?.topicCategories||[]).map(u=>decodeURIComponent(u.split('/wiki/')[1]||''))}
+      }
+      for(const c of missing)c.topics||=[];
+      state.synced=true;saveLineup();renderGuide();
+      const warm=[...new Set([...ranked().slice(0,24),...recordedCreators()])];
+      for(const c of warm)ensureFresh(c,VIDEO_FRESH);
+      while(loadActive||loadQueue.length)await new Promise(r=>setTimeout(r,300));
+      $('status').textContent=`Connected · ${found.length} creators`;$('connect').textContent='Refresh guide';$('disconnect').hidden=false;renderGuide();
+    }catch(e){$('status').textContent=`Sync failed: ${e.message}`}
+  }
+  function connect(){if(location.protocol==='file:'){$('fileWarning').hidden=false;return}if(!window.google?.accounts?.oauth2){$('status').textContent='Google sign-in is loading. Try again.';return}try{const client=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:'https://www.googleapis.com/auth/youtube.readonly',callback:r=>{if(r.error){$('status').textContent=`Sign-in failed: ${r.error}`;return}state.token=r.access_token;sync()}});client.requestAccessToken({prompt:''})}catch(e){$('status').textContent=`Could not sign in: ${e.message}`}}
+  function watchLabel(c,p){$('watchChannel').textContent=`CH ${channelNo(c)} · ${c.name}`;$('watchTitle').textContent=p.video.title;$('watchLive').textContent=c.onDemand&&p.offset>3?`RESUMING AT ${Math.floor(p.offset/60)}:${String(Math.floor(p.offset%60)).padStart(2,'0')}`:p.offset>3?`JOINED ${Math.floor(p.offset/60)} MIN INTO PROGRAM`:'LIVE FROM PROGRAM START';$('watchMessage').textContent=p.video.creator?`From ${p.video.creator} · official YouTube player`:'Official YouTube player'}
+  // ── Deck player ─────────────────────────────────────────────────────────────────────────────────
+  // Cable never showed a spinner. One YouTube player is on the air; the others wait hidden, muted and paused on
+  // what you're likely to watch next: the next program, plus the channels above and below (kept near "live", so
+  // surfing lands mid-show like real TV). Players are built once and reused with loadVideoById.
+  const DECKS=4,NEIGHBOR_REFRESH=45000;
+  // YouTube no longer lets embeds pick a quality; it chooses one to fit the player's pixel size. So the players are
+  // laid out at a full 1080p or 4K canvas and scaled down to the screen, which makes YouTube stream the sharp version.
+  const QUALITY_CANVAS={auto:null,'1080':[1920,1080],'2160':[3840,2160]};
+  function fitDecks(){const box=$('videoBox'),size=QUALITY_CANVAS[state.quality];box.classList.toggle('canvas',!!size);if(!size)return;const [w,h]=size,scale=Math.min(box.clientWidth/w,box.clientHeight/h)||1;box.style.setProperty('--cw',w+'px');box.style.setProperty('--ch',h+'px');box.style.setProperty('--cs',scale)}
+  new ResizeObserver(fitDecks).observe($('videoBox'));
+  let ytResolve;const ytReady=new Promise(res=>ytResolve=res);if(window.YT?.Player)ytResolve();
+  const decks=[...Array(DECKS)].map((_,i)=>({i,player:null,ready:null,shell:null,mode:'idle',role:null,videoId:null,startAt:0,primed:false,seq:0,armTimer:null}));
+  let onAir=null,airPoll=null,preloadTimer=null,refreshTimer=null,doneMarked=null,lastResumeSave=0,tuneSeq=0;
+  const activeDecks=()=>decks.slice(0,state.preloadNeighbors?DECKS:2);
+  const emit=(name,detail)=>document.dispatchEvent(new CustomEvent(name,{detail}));
+  function deckPlayer(d){
+    if(d.ready)return d.ready;
+    d.ready=ytReady.then(()=>new Promise(res=>{
+      const shell=document.createElement('div'),host=document.createElement('div');shell.className='deck';shell.append(host);$('videoBox').append(shell);d.shell=shell;
+      new YT.Player(host,{host:'https://www.youtube.com',width:'100%',height:'100%',playerVars:{playsinline:1,rel:0,iv_load_policy:3,fs:0,disablekb:1,origin:location.origin},
+        events:{onReady:e=>{d.player=e.target;res(d.player)},onStateChange:e=>deckState(d,e.data),onError:()=>deckError(d)}});
+    }));
+    return d.ready;
+  }
+  const park=d=>{d.player.pauseVideo();d.mode='standby';d.primed=true};
+  function deckState(d,s){
+    const P=YT.PlayerState;
+    if(d.mode==='preload'&&s===P.PLAYING){park(d);if(d.role==='next')d.player.seekTo(d.startAt,true);return}
+    if(d.mode==='arming'&&s===P.PLAYING)return goOnAir(d);
+    if(d.mode!=='air')return;
+    if(s===P.PLAYING){state.playerErrors=0;startWatchClock(d.videoId)}else if(s===P.ENDED)finishProgram();else pauseWatchClock();
+  }
+  function deckError(d){
+    if(d.videoId)state.unplayable.add(d.videoId);
+    if(d.mode==='preload'||d.mode==='standby'){d.mode='idle';d.primed=false;d.videoId=null;d.role=null;return}
+    if(d.mode!=='arming'&&d.mode!=='air')return;
+    clearTimeout(d.armTimer);if(d.seq!==tuneSeq&&d.mode==='arming'){d.mode='idle';return}
+    resetWatchClock();state.playerErrors++;
+    if(state.playerErrors<4)advanceProgram();else{emit('nv:onair');$('watchMessage').textContent='This channel cannot play here. Try another channel.'}
+  }
+  // Put a program on a standby deck; it cuts to air the moment it is really playing. A deck already parked on the
+  // same video just un-pauses (after nudging it to the live position) — that's the near-instant path.
+  async function take(p,kind){
+    const pool=activeDecks().filter(d=>d.i!==onAir),sacrifice=kind==='channel'?'next':'down';
+    const d=pool.find(x=>x.primed&&x.videoId===p.video.id)||pool.find(x=>x.mode==='idle')||pool.find(x=>x.role===sacrifice)||pool.find(x=>x.mode!=='arming')||pool[0];
+    const primed=d.primed&&d.videoId===p.video.id,seq=++tuneSeq;d.seq=seq;
+    if(kind==='channel'&&onAir!==null)decks[onAir].player?.mute();
+    emit('nv:tuning',{kind,primed});
+    await deckPlayer(d);if($('watchOverlay').hidden||d.seq!==seq)return;
+    clearTimeout(d.armTimer);clearTimeout(preloadTimer);d.player.mute();d.mode='arming';d.role=null;
+    if(primed){if(Math.abs((d.player.getCurrentTime?.()||0)-p.offset)>60)d.player.seekTo(p.offset,true);d.player.playVideo()}
+    else{d.primed=false;d.videoId=p.video.id;d.player.loadVideoById({videoId:p.video.id,startSeconds:Math.floor(p.offset)})}
+    // YouTube won't start while the page is hidden (screensaver, app in background), so only give up on a video after
+    // 12 seconds of it actually being on screen and still not playing.
+    let waited=false;const giveUp=()=>{if(d.mode!=='arming')return;if(document.hidden){waited=true;d.armTimer=setTimeout(giveUp,2000);return}if(waited){waited=false;d.armTimer=setTimeout(giveUp,12000);return}deckError(d)};d.armTimer=setTimeout(giveUp,12000);
+  }
+  function goOnAir(d){
+    if(d.seq!==tuneSeq){park(d);return} // lost a fast-surf race; stays parked as a spare
+    const loaded=d.player.getVideoData?.()?.video_id;if(loaded&&loaded!==d.videoId)return;
+    clearTimeout(d.armTimer);
+    const old=onAir===null?null:decks[onAir];
+    d.mode='air';d.role='air';d.primed=false;onAir=d.i;d.shell.classList.add('on-air');d.player.unMute();
+    if(old&&old!==d){
+      old.shell.classList.remove('on-air');old.player?.mute();
+      // the channel you just left is the likeliest one to come back to, so keep it parked unless it had finished
+      if(old.mode==='ending'){old.mode='idle';old.primed=false;old.videoId=null;old.role=null;old.player?.stopVideo()}else{park(old);old.role='back'}
+    }
+    resetWatchClock();doneMarked=null;state.playerErrors=0;startWatchClock(d.videoId);emit('nv:onair');
+    clearTimeout(preloadTimer);preloadTimer=setTimeout(preloadAll,2500);
+    clearInterval(refreshTimer);refreshTimer=setInterval(preloadAll,NEIGHBOR_REFRESH);
+    clearInterval(airPoll);airPoll=setInterval(pollAir,500);
+  }
+  function pollAir(){
+    const d=decks[onAir];if(!d||d.mode!=='air'||!d.player?.getDuration)return;
+    const dur=d.player.getDuration(),t=d.player.getCurrentTime();if(!dur)return;
+    if(t/dur>=.9&&doneMarked!==d.videoId){doneMarked=d.videoId;markDone(d.videoId)}
+    if(Date.now()-lastResumeSave>5000){lastResumeSave=Date.now();if(byId(state.playingId)?.onDemand&&t>15&&dur-t>30)saveResume(d.videoId,t)}
+    if(dur-t<.8&&d.player.getPlayerState()===YT.PlayerState.PLAYING)finishProgram(); // cut before YouTube's end screen
+  }
+  function finishProgram(){const d=decks[onAir];if(!d||d.mode!=='air')return;d.mode='ending';resetWatchClock();markSeen(d.videoId);markDone(d.videoId);advanceProgram()}
+  // Decide what the spare decks should hold and pre-roll anything new, staggered so they don't fight for bandwidth.
+  function preloadAll(){
+    if(onAir===null||decks[onAir].mode!=='air'||$('watchOverlay').hidden)return;
+    const want=[],next=upcoming();if(next)want.push({role:'next',p:next});
+    if(state.preloadNeighbors)for(const [role,dir] of [['up',1],['down',-1]]){const c=neighbor(dir,true),p=c&&positionAt(c);if(p&&!want.some(w=>w.p.video.id===p.video.id))want.push({role,p,channelId:c.id})}
+    const pool=activeDecks().filter(d=>d.i!==onAir&&d.mode!=='arming'),claimed=new Set();
+    for(const w of want){const d=pool.find(x=>!claimed.has(x)&&(x.mode==='standby'||x.mode==='preload')&&x.videoId===w.p.video.id);if(!d)continue;claimed.add(d);w.deck=d;d.role=w.role;
+      if(w.role!=='next'&&d.mode==='standby'&&Math.abs((d.player.getCurrentTime?.()||0)-w.p.offset)>5)d.player.seekTo(w.p.offset,true)} // stay near live; paused decks stay paused
+    let delay=0;for(const w of want){if(w.deck)continue;const d=pool.find(x=>!claimed.has(x));if(!d)break;claimed.add(d);d.role=w.role;setTimeout(()=>preroll(d,w.p,w.role),delay);delay+=1500}
+  }
+  function preroll(d,p,role){deckPlayer(d).then(()=>{if(d.mode==='arming'||d.mode==='air'||d.role!==role)return;d.mode='preload';d.primed=false;d.videoId=p.video.id;d.startAt=Math.floor(p.offset);d.player.mute();d.player.loadVideoById({videoId:p.video.id,startSeconds:d.startAt})})}
+  // What airs after the current program, without committing to it (used for pre-rolling and for advancing).
+  function upcoming(){
+    const vids=state.playingVideos;if(!vids?.length)return null;
+    const ch=byId(state.playingId),current=vids[state.playingIndex]?.id;
+    if(ch?.onDemand){
+      const fresh=ch.videos.filter(v=>v.id!==current&&!state.unplayable.has(v.id));if(!fresh.length)return null;
+      const order=vids.slice(state.playingIndex+1).concat(vids.slice(0,state.playingIndex)),after=order.find(x=>fresh.some(y=>y.id===x.id));
+      const pick=fresh.find(v=>v.id===after?.id)||fresh[0];return {video:pick,videos:fresh,index:fresh.indexOf(pick),offset:resumeOf(pick)};
+    }
+    for(let step=1;step<=vids.length;step++){const i=(state.playingIndex+step)%vids.length;if(!state.unplayable.has(vids[i].id)||step===vids.length)return {video:vids[i],videos:vids,index:i,offset:0}}
+    return null;
+  }
+  // The channel dir steps away that actually has something on. ready=true also skips creators whose uploads
+  // haven't loaded yet (can't pre-roll those); surfing still lands on them and loads on the spot.
+  function neighbor(dir,ready){const list=visible(),n=list.length,at=list.findIndex(x=>x.id===state.playingId);for(let step=1;step<n;step++){const c=list[((at+dir*step)%n+n)%n];if(!c||c.id===state.playingId)continue;if(special(c.id)&&!c.videos.length)continue;if(ready&&!c.videos?.length)continue;return c}return null}
+  // Resume points for on-demand channels (VCR, lists) live in their own small store so the 5-second saves stay cheap.
+  const RESUME_STORE='nostalgiavision-resume-v1';
+  let resumeMap={};try{resumeMap=JSON.parse(localStorage.getItem(RESUME_STORE)||'{}')}catch{}
+  function saveResume(id,t){resumeMap[id]=Math.floor(t);const keys=Object.keys(resumeMap);if(keys.length>500)delete resumeMap[keys[0]];try{localStorage.setItem(RESUME_STORE,JSON.stringify(resumeMap))}catch{}}
+  function resumeOf(v){const at=Number(resumeMap[v.id]||0),d=Math.max(60,v.duration||900);return at>=15&&at<=d-30?at:0}
+
+  async function tune(id){closeBrowse();stopPreview();let c=byId(id);if(!c)return;if(!special(c.id)&&!c.loaded&&!c.videos?.length&&c.uploadsPlaylist){$('status').textContent=`Loading ${c.name}…`;await loadVideos(c);c=byId(id)}if(special(c.id)&&!c.videos.length){$('status').textContent=c.isVcr?'Nothing on tape yet. Press ● Record on a creator.':c.isList?'Nothing left on that list.':c.id==='unseen-today'?'You are caught up with this mix today.':c.isGroup?'That channel is still filling. Try again in a moment.':'The mix is filling. Try a creator channel first.';return}const p=positionAt(c);if(!p){$('status').textContent=`No playable uploads for ${c.name}`;return}state.selectedId=id;state.playingId=id;state.playingIndex=p.index;state.playingVideos=p.videos;state.pending=p;state.playerErrors=0;if(!special(id)){state.counts[id]=(state.counts[id]||0)+1;persist()}$('watchOverlay').hidden=false;$('watchPanel').focus({preventScroll:true});watchLabel(c,p);renderGuide();take(p,'channel')}
+  function advanceProgram(){
+    const next=upcoming();
+    if(!next){closeWatch();$('status').textContent='All caught up on that channel.';return}
+    state.playingVideos=next.videos;state.playingIndex=next.index;
+    watchLabel(byId(state.playingId)||{id:state.playingId,name:'Channel'},next);take(next,'program');
+  }
+  function surf(direction){const c=neighbor(direction,false);if(c)tune(c.id)}
+  function closeWatch(){closeBrowse();resetWatchClock();clearInterval(airPoll);clearInterval(refreshTimer);clearTimeout(preloadTimer);tuneSeq++;for(const d of decks){clearTimeout(d.armTimer);d.mode='idle';d.role=null;d.primed=false;d.videoId=null;d.shell?.classList.remove('on-air');d.player?.mute?.();d.player?.stopVideo?.()}onAir=null;emit('nv:onair');$('watchOverlay').hidden=true;state.playingId=null;state.pending=null;renderGuide();document.querySelector(`.guide-row[data-id="${CSS.escape(state.selectedId)}"]`)?.focus({preventScroll:false})}
+  $('connect').onclick=connect;$('disconnect').onclick=()=>{stopPreview();if(state.token&&window.google?.accounts?.oauth2)google.accounts.oauth2.revoke(state.token,()=>{});closeWatch();state.token=null;state.subs=[];state.selectedId='for-you';$('connect').textContent='Connect YouTube';$('disconnect').hidden=true;$('status').textContent='Disconnected';renderGuide()};
+  $('tuneButton').onclick=()=>tune(state.selectedId);$('seenButton').onclick=()=>{const p=positionAt(byId(state.selectedId));if(!p)return;if(seenToday(p.video.id)){delete state.seen[p.video.id];persist();renderGuide()}else markSeen(p.video.id)};$('stopPreviewButton').onclick=stopPreview;$('favoriteButton').onclick=()=>{const id=state.selectedId;if(state.favorites.has(id))state.favorites.delete(id);else state.favorites.add(id);persist();renderGuide()};
+  document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{state.mode=b.dataset.mode;state.query='';$('search').value='';document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('active',x===b));renderGuide()});$('search').oninput=e=>{state.query=e.target.value;state.limit=60;renderGuide()};$('loadMore').onclick=()=>{state.limit+=60;renderGuide()};
+  $('settingsButton').onclick=()=>{stopPreview();$('topCount').value=String(state.topN);$('historyImportStatus').textContent=state.historyImport?`Last import: ${new Date(state.historyImport.date).toLocaleDateString()} · ${state.historyImport.count.toLocaleString()} watched entries.`:'No history file imported.';$('settingsOverlay').hidden=false};$('closeSettings').onclick=()=>{$('settingsOverlay').hidden=true};$('topCount').onchange=e=>{state.topN=Number(e.target.value);persist();renderGuide()};$('historyFile').onchange=e=>importWatchHistory(e.target.files?.[0]);
+  $('back').onclick=closeWatch;$('prevChannel').onclick=()=>surf(-1);$('nextChannel').onclick=()=>surf(1);$('nextProgram').onclick=advanceProgram;
+  document.addEventListener('keydown',e=>{if(!$('optionsOverlay').hidden){if(['Escape','GoBack','BrowserBack','Backspace'].includes(e.key)){e.preventDefault();closeOptions()}else dialogNav(e,$('optionsOverlay'));return}for(const id of ['groupOverlay','listOverlay','settingsOverlay']){const o=$(id);if(!o.hidden&&!['Escape','GoBack','BrowserBack'].includes(e.key)&&dialogNav(e,o))return}if(!$('groupOverlay').hidden){if(['Escape','GoBack','BrowserBack'].includes(e.key))$('groupOverlay').hidden=true;return}if(!$('signinOverlay').hidden){if(['Escape','GoBack','BrowserBack','Backspace'].includes(e.key))closeSignin();return}if(!$('listOverlay').hidden){if(e.key==='Escape')$('listOverlay').hidden=true;else if(e.key==='Enter'&&e.target.tagName!=='BUTTON')createList();return}if(!$('settingsOverlay').hidden){if(e.key==='Escape')$('settingsOverlay').hidden=true;return}if(!$('watchOverlay').hidden){if(browseKey(e))return;const onButton=e.target.closest?.('button');if(['Escape','GoBack','BrowserBack','Backspace'].includes(e.key)){e.preventDefault();closeWatch()}else if(!onButton&&[' ','Enter','k','MediaPlayPause','MediaPlay','MediaPause'].includes(e.key)){e.preventDefault();const pl=onAir===null?null:decks[onAir].player;if(pl?.getPlayerState)pl.getPlayerState()===1?pl.pauseVideo():pl.playVideo()}else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();openBrowse(e.key==='ArrowRight'?1:-1)}return}if(zoneNav(e))return;if(document.activeElement===$('search'))return;if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const list=visible(),i=list.findIndex(x=>x.id===state.selectedId),next=list[Math.max(0,Math.min(list.length-1,i+(e.key==='ArrowDown'?1:-1)))];if(next){state.selectedId=next.id;const row=document.querySelector(`.guide-row[data-id="${CSS.escape(next.id)}"]`);if(row){queuePreview(next.id);row.focus({preventScroll:true});row.scrollIntoView({block:'nearest'})}else renderGuide()}}else if(e.key==='Enter'&&!e.target.closest('.guide-row,button,input,select,a'))tune(state.selectedId)});
+  // ── Lists: "what I haven't watched from <creator> on <day>" channels that shrink as you finish videos ──
+  // A video counts as watched once 90% of it has played here (or it ends, or you mark it). YouTube's API can't see
+  // what you watched in other apps, so a fresh Takeout import is the only way to pull that in.
+  const markDone=id=>{if(!id||state.done[id])return;state.done[id]=Date.now();persist();renderGuide()};
+  const listLabel=l=>{if(l.auto)return l.keepHours<48?`Last ${l.keepHours}h`:`Last ${l.keepHours/24} days`;const fmt=d=>new Date(`${d}T00:00`).toLocaleDateString([],{month:'short',day:'numeric'});return l.from===l.to?fmt(l.from):`${fmt(l.from)}–${fmt(l.to)}`};
+  function listChannels(){return state.lists.map((l,i)=>{const fresh=v=>!l.auto||v.published>=Date.now()-l.keepHours*HOUR,left=l.videos.filter(v=>fresh(v)&&!state.done[v.id]&&!state.unplayable.has(v.id));return {id:l.id,name:`${l.creatorName} · ${listLabel(l)}`,subtitle:l.auto?(left.length?`● Rec · ${left.length} unwatched`:'● Rec · nothing new'):left.length?`${left.length} of ${l.videos.length} unwatched`:'All caught up ✓',videos:left,onDemand:true,isList:true,list:l,no:String(4+i).padStart(3,'0')}})}
+  function renderListBits(c,p){renderGroupBits(c);$('deleteListButton').hidden=!c.isList;$('deleteListButton').textContent='Delete list';renderRecButton(c);if(c.isVcr){$('seenButton').textContent='Erase';$('detailNext').textContent=c.tapeNote;return}if(!c.isList)return;$('seenButton').textContent='Mark watched';if(!p)$('detailNext').textContent='All caught up. Delete this list or make a new one.'}
+  async function uploadsBetween(c,from,to,shorts){
+    if(!c.uploadsPlaylist){const j=await api('channels',{part:'contentDetails',id:c.youtubeId});c.uploadsPlaylist=j.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;if(!c.uploadsPlaylist)throw new Error('This creator has no uploads playlist')}
+    const found=[];let page,pages=0;
+    do{
+      const j=await api('playlistItems',{part:'snippet,contentDetails',playlistId:c.uploadsPlaylist,maxResults:50,pageToken:page});let oldest=Infinity;
+      for(const x of j.items||[]){const id=x.contentDetails?.videoId,at=Date.parse(x.contentDetails?.videoPublishedAt||x.snippet?.publishedAt);if(!id||!Number.isFinite(at))continue;oldest=Math.min(oldest,at);if(at>=from&&at<to)found.push({id,title:x.snippet?.title||'Untitled',published:at})}
+      page=j.nextPageToken;pages++;$('listStatus').textContent=`Searching ${c.name}’s uploads… ${pages*50} checked`;
+      if(oldest<from)break; // uploads come newest first, so once we're past the start day we're done
+    }while(page&&pages<40);
+    const out=[];
+    for(let i=0;i<found.length;i+=50){
+      const group=found.slice(i,i+50),info=await api('videos',{part:'contentDetails,status,snippet',id:group.map(v=>v.id).join(',')}),details=new Map((info.items||[]).map(x=>[x.id,x]));
+      for(const v of group){const d=details.get(v.id);if(!d||d.status?.embeddable===false||(d.snippet?.liveBroadcastContent||'none')!=='none')continue;const len=duration(d.contentDetails?.duration);if(!shorts&&(len<MIN_PROGRAM||/#shorts?\b/i.test(v.title)))continue;out.push({...v,duration:len,creator:c.name,creatorId:c.id})}
+    }
+    return out.sort((a,b)=>a.published-b.published);
+  }
+  function openListDialog(){
+    stopPreview();if(!state.token){$('status').textContent='Connect YouTube to make lists';return}
+    const sel=byId(state.selectedId),today=new Date(Date.now()-new Date().getTimezoneOffset()*MINUTE).toISOString().slice(0,10);
+    $('creatorOptions').innerHTML=state.subs.map(c=>`<option value="${clean(c.name)}">`).join('');
+    $('listCreator').value=sel&&!special(sel.id)?sel.name:'';$('listFrom').value||=today;$('listTo').value||=$('listFrom').value;
+    $('listStatus').textContent='';$('listOverlay').hidden=false;($('listCreator').value?$('listFrom'):$('listCreator')).focus();
+  }
+  async function createList(){
+    if($('createList').disabled)return;
+    const q=$('listCreator').value.trim().toLowerCase(),c=q&&(state.subs.find(x=>x.name.toLowerCase()===q)||state.subs.find(x=>x.name.toLowerCase().includes(q)));
+    if(!c){$('listStatus').textContent='Pick one of your subscribed creators.';return}
+    const auto=$('listAuto').checked,keepHours=Number($('listKeep').value);let from=$('listFrom').value,to=$('listTo').value||from;if(!auto&&!from){$('listStatus').textContent='Pick a day.';return}if(to<from)[from,to]=[to,from];
+    const start=auto?new Date(Date.now()-keepHours*HOUR):new Date(`${from}T00:00`),end=auto?new Date(Date.now()+HOUR):new Date(`${to}T00:00`);if(!auto)end.setDate(end.getDate()+1);
+    $('createList').disabled=true;$('listStatus').textContent=`Searching ${c.name}’s uploads…`;
+    try{
+      const videos=await uploadsBetween(c,start.getTime(),end.getTime(),$('listShorts').checked);
+      if(!videos.length&&!auto){$('listStatus').textContent=`No playable uploads from ${c.name} in that range.`;return}
+      const list={id:`list-${Date.now().toString(36)}`,creatorId:c.id,creatorName:c.name,from,to,videos,created:Date.now(),...(auto?{auto,keepHours}:{})};
+      state.lists.push(list);persist();$('listOverlay').hidden=true;state.query='';$('search').value='';state.selectedId=list.id;renderGuide();
+      const left=listChannels().find(x=>x.id===list.id).videos.length;if(auto&&!c.loaded)loadVideos(c);$('status').textContent=auto?`New recording channel ${channelNo(byId(list.id))}: ${left} unwatched now, new uploads tape in automatically`:left?`New channel ${channelNo(byId(list.id))}: ${left} unwatched`:'Made the list, and you have already watched all of it';
+      document.querySelector(`.guide-row[data-id="${CSS.escape(list.id)}"]`)?.focus();
+    }catch(e){$('listStatus').textContent=`Could not build the list: ${e.message}`}finally{$('createList').disabled=false}
+  }
+  $('listAuto').onchange=e=>{$('autoOpts').hidden=!e.target.checked;$('dayOpts').hidden=e.target.checked};$('newListButton').onclick=openListDialog;$('createList').onclick=createList;$('cancelList').onclick=()=>{$('listOverlay').hidden=true};
+  $('deleteListButton').onclick=()=>{const c=byId(state.selectedId),b=$('deleteListButton');if(!c?.isList)return;if(b.textContent!=='Press again to delete'){b.textContent='Press again to delete';return}state.lists=state.lists.filter(l=>l.id!==c.id);persist();state.selectedId='for-you';renderGuide()};
+  {const baseSeen=$('seenButton').onclick;$('seenButton').onclick=()=>{const c=byId(state.selectedId);if(!c?.isList&&!c?.isVcr)return baseSeen();const p=positionAt(c);if(p){markSeen(p.video.id);markDone(p.video.id)}}}
+  // ── VCR: the list that runs itself ─────────────────────────────────────────────────────────────────
+  // Creators on "timer record" (the ones you press ● Record on, plus your top N automatically) get every new upload
+  // taped. Recordings erase themselves once watched, expire after two weeks, keep at most 5 per creator, and when
+  // the 8-hour tape is full the oldest ones get taped over. Where you stopped is remembered.
+  const VCR_TAPE_HOURS=8,VCR_KEEP_DAYS=14,VCR_PER_CREATOR=5,VCR_GRACE_HOURS=48,VCR_MAX_MINUTES=120;
+  const tapeFrom=id=>(state.vcr.since[id]||Date.now())-VCR_GRACE_HOURS*HOUR;
+  const isRecorded=c=>{if(!c||special(c.id))return false;const pass=state.vcr.passes[c.id];if(pass==='never')return false;return pass==='always'||topSet(state.vcr.autoTop).has(c)};
+  const recordedCreators=()=>creators().filter(c=>isRecorded(c)||state.lists.some(l=>l.auto&&l.creatorId===c.id));
+  function vcrCapture(c){
+    let listChanged=false;for(const l of state.lists){if(!l.auto)continue;const cutoff=Date.now()-l.keepHours*HOUR,before=l.videos.length;l.videos=l.videos.filter(v=>v.published>=cutoff);if(l.creatorId===c.id)for(const v of c.videos||[])if(v.published>=cutoff&&!l.videos.some(x=>x.id===v.id))l.videos.push({...v,creator:c.name,creatorId:c.id});if(l.videos.length!==before){l.videos.sort((a,b)=>a.published-b.published);listChanged=true}}if(listChanged)persist();
+    if(!isRecorded(c))return;if(!state.vcr.since[c.id]){state.vcr.since[c.id]=Date.now();persist()}const cutoff=Math.max(Date.now()-VCR_KEEP_DAYS*24*HOUR,tapeFrom(c.id));let added=0;
+    for(const v of c.videos||[])if(v.published>=cutoff&&v.duration<=VCR_MAX_MINUTES*60&&!state.done[v.id]&&!state.vcr.recs[v.id]){state.vcr.recs[v.id]={id:v.id,title:v.title,duration:v.duration,published:v.published,creator:c.name,creatorId:c.id,taped:Date.now()};added++}
+    if(added)persist();
+  }
+  function vcrChannel(){
+    const cutoff=Date.now()-VCR_KEEP_DAYS*24*HOUR;let expired=false;
+    for(const [id,r] of Object.entries(state.vcr.recs))if(state.done[id]||r.published<cutoff||r.published<tapeFrom(r.creatorId)||r.duration>VCR_MAX_MINUTES*60){delete state.vcr.recs[id];expired=true}
+    if(expired)persist();
+    const perCreator={},kept=[];let used=0;
+    for(const r of Object.values(state.vcr.recs).filter(r=>!state.unplayable.has(r.id)).sort((a,b)=>b.published-a.published)){
+      if((perCreator[r.creatorId]=(perCreator[r.creatorId]||0)+1)>VCR_PER_CREATOR)continue;
+      const len=Math.max(60,r.duration||900)-resumeOf(r);if(used+len>VCR_TAPE_HOURS*HOUR/1000)break; // everything older is taped over
+      used+=len;kept.push(r);
+    }
+    const pct=Math.round(used/(VCR_TAPE_HOURS*36)),left=Math.max(0,VCR_TAPE_HOURS*3600-used),hrs=`${Math.floor(left/3600)}h ${Math.floor(left%3600/60)}m`;
+    const count=recordedCreators().length;
+    return {id:'vcr',name:'VCR',no:'003',isVcr:true,onDemand:true,videos:spreadCreators(kept.sort((a,b)=>a.published-b.published)),
+      subtitle:kept.length?`Tape ${pct}% full · ${kept.length} taped`:'Tape is empty',
+      tapeNote:`Timer recording ${count} creator${count===1?'':'s'} · ${hrs} left on tape · watched shows erase themselves`};
+  }
+  function renderRecButton(c){const b=$('recButton');b.hidden=!c||special(c.id);if(b.hidden)return;const pass=state.vcr.passes[c.id];b.textContent=isRecorded(c)?(pass==='always'?'● Recording':`● Rec (Top ${state.vcr.autoTop})`):'○ Record';b.classList.toggle('rec-on',isRecorded(c))}
+  $('recButton').onclick=()=>{const c=byId(state.selectedId);if(!c||special(c.id))return;state.vcr.passes[c.id]=isRecorded(c)?'never':'always';if(state.vcr.passes[c.id]==='always')state.vcr.since[c.id]=Date.now();else delete state.vcr.since[c.id];persist();if(isRecorded(c)){if(c.loaded)vcrCapture(c);else loadVideos(c)}renderGuide()};
+  // keep taping while the TV sits on: re-check recorded creators for new uploads every 30 minutes
+  setInterval(()=>{if(!state.token)return;for(const c of recordedCreators()){c.loaded=false;loadVideos(c)}},30*MINUTE);
+  $('qualitySelect').value=state.quality;$('qualitySelect').onchange=e=>{state.quality=e.target.value;persist();fitDecks()};fitDecks();
+  $('preloadToggle').checked=state.preloadNeighbors;$('preloadToggle').onchange=e=>{state.preloadNeighbors=e.target.checked;persist();if(state.preloadNeighbors)activeDecks().forEach(deckPlayer)};
+  $('vcrAuto').value=String(state.vcr.autoTop);$('vcrAuto').onchange=e=>{state.vcr.autoTop=Number(e.target.value);persist();for(const c of recordedCreators())if(c.loaded)vcrCapture(c);renderGuide()};
+  // ── Browse bar ──────────────────────────────────────────────────────────────────────────────────
+  // ←/→ while watching slides a strip of channels up from the bottom; the show keeps playing. OK tunes the one in the
+  // middle, Back closes it. Lingering on a channel quietly pre-rolls it on a spare deck, so tuning from here is quick.
+  const browse={open:false,index:0,timer:null,dwell:null};
+  function openBrowse(dir){
+    const list=visible();if(!list.length)return;
+    if(!browse.open){browse.open=true;browse.index=Math.max(0,list.findIndex(c=>c.id===state.playingId));$('watchPanel').classList.add('browsing')}
+    browse.index=((browse.index+dir)%list.length+list.length)%list.length;renderBrowse(list);
+    clearTimeout(browse.timer);browse.timer=setTimeout(closeBrowse,8000);
+    clearTimeout(browse.dwell);browse.dwell=setTimeout(()=>{const c=list[browse.index];if(c&&c.id!==state.playingId)prerollChannel(c)},700);
+  }
+  function closeBrowse(){browse.open=false;clearTimeout(browse.timer);clearTimeout(browse.dwell);$('watchPanel').classList.remove('browsing')}
+  function browseKey(e){
+    if(!browse.open)return false;
+    if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();openBrowse(e.key==='ArrowRight'?1:-1);return true}
+    if(['Escape','GoBack','BrowserBack','Backspace'].includes(e.key)){e.preventDefault();closeBrowse();return true}
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();const c=visible()[browse.index];closeBrowse();if(c&&c.id!==state.playingId)tune(c.id);return true}
+    return false; // ↑/↓ still change channels
+  }
+  function renderBrowse(list){
+    const cards=[-2,-1,0,1,2].map(o=>list[((browse.index+o)%list.length+list.length)%list.length]);
+    $('browseBar').innerHTML=cards.map((c,i)=>{
+      const p=positionAt(c),left=p?Math.max(1,Math.ceil((p.end-Date.now())/MINUTE)):0,here=c.id===state.playingId;
+      const img=p?`<img src="https://i.ytimg.com/vi/${encodeURIComponent(p.video.id)}/mqdefault.jpg" alt="">`:'';
+      return `<div class="browse-card${i===2?' focus':''}">${img}<div class="browse-info"><span class="browse-no">CH ${clean(channelNo(c))}${here?' · ON NOW':''}</span><strong>${clean(c.name)}</strong><span>${p?clean(p.video.title):'Nothing on'}</span>${p?`<small>${left} min left</small>`:''}</div></div>`;
+    }).join('');
+  }
+  // Pre-roll a browsed channel on the least useful spare deck (never the one holding the next program).
+  function prerollChannel(c){
+    const p=positionAt(c);if(!p||onAir===null)return;
+    const pool=activeDecks().filter(d=>d.i!==onAir&&d.mode!=='arming');if(pool.some(d=>d.videoId===p.video.id))return;
+    const d=pool.find(x=>x.mode==='idle')||pool.find(x=>x.role==='back')||pool.find(x=>x.role==='browse')||pool.find(x=>x.role==='down')||pool.find(x=>x.role==='up');
+    if(d){d.role='browse';preroll(d,p,'browse')}
+  }
+  // ── TV-style sign-in ────────────────────────────────────────────────────────────────────────────
+  // Google's sign-in for TVs: the screen shows a short code, you approve it on your phone at google.com/device, and the
+  // app keeps a long-lived grant in this device's storage so it stays signed in and renews itself. Needs a
+  // "TVs and Limited Input devices" OAuth client in nostalgiavision.config.json; without one, the old pop-up is used.
+  const AUTH_STORE='nostalgiavision-auth-v1';
+  let tvConfig=null,renewTimer=null,deviceFlow=null;
+  const authSaved=()=>{try{return JSON.parse(localStorage.getItem(AUTH_STORE)||'null')}catch{return null}};
+  const oauth=async(url,params)=>{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(params)});return {ok:r.ok,body:await r.json().catch(()=>({}))}};
+  async function loadTvConfig(){try{const r=await fetch('config.json',{cache:'no-store'});const j=r.ok?await r.json():{};if(j.tvClientId&&j.tvClientSecret&&!/PASTE/.test(j.tvClientId+j.tvClientSecret))tvConfig=j}catch{}}
+  function scheduleRenew(seconds){clearTimeout(renewTimer);renewTimer=setTimeout(renewAccess,Math.max(60,(Number(seconds)||3600)-300)*1000)}
+  async function renewAccess(){
+    const saved=authSaved();if(!saved?.grant||!tvConfig)return false;
+    try{
+      const {ok,body}=await oauth('https://oauth2.googleapis.com/token',{client_id:tvConfig.tvClientId,client_secret:tvConfig.tvClientSecret,refresh_token:saved.grant,grant_type:'refresh_token'});
+      if(!ok){if(body.error==='invalid_grant'){try{localStorage.removeItem(AUTH_STORE)}catch{}$('status').textContent='Sign-in was revoked · press Connect'}return false}
+      state.token=body.access_token;scheduleRenew(body.expires_in);return true;
+    }catch{return false}
+  }
+  function closeSignin(){deviceFlow=null;$('signinOverlay').hidden=true}
+  async function tvSignIn(){
+    stopPreview();$('signinOverlay').hidden=false;$('signinCode').textContent='· · · ·';$('signinUrl').textContent='google.com/device';$('signinStatus').textContent='Getting a code…';
+    const flow={};deviceFlow=flow;
+    try{
+      const {ok,body}=await oauth('https://oauth2.googleapis.com/device/code',{client_id:tvConfig.tvClientId,scope:'https://www.googleapis.com/auth/youtube.readonly'});
+      if(!ok)throw new Error(body.error_description||body.error||'Google refused the request');
+      if(deviceFlow!==flow)return;
+      $('signinCode').textContent=body.user_code;$('signinUrl').textContent=String(body.verification_url||'google.com/device').replace(/^https?:\/\//,'');$('signinStatus').textContent='Waiting for you to approve on your phone…';
+      let wait=Math.max(5,Number(body.interval)||5)*1000;const expires=Date.now()+(Number(body.expires_in)||1800)*1000;
+      while(deviceFlow===flow&&Date.now()<expires){
+        await new Promise(r=>setTimeout(r,wait));if(deviceFlow!==flow)return;
+        const res=await oauth('https://oauth2.googleapis.com/token',{client_id:tvConfig.tvClientId,client_secret:tvConfig.tvClientSecret,device_code:body.device_code,grant_type:'urn:ietf:params:oauth:grant-type:device_code'});
+        if(res.ok){
+          try{localStorage.setItem(AUTH_STORE,JSON.stringify({grant:res.body.refresh_token,at:Date.now()}))}catch{}
+          state.token=res.body.access_token;scheduleRenew(res.body.expires_in);closeSignin();sync();return;
+        }
+        if(res.body.error==='slow_down')wait+=5000;else if(res.body.error!=='authorization_pending')throw new Error(res.body.error_description||res.body.error);
+      }
+      if(deviceFlow===flow)$('signinStatus').textContent='That code expired. Close and press Connect for a new one.';
+    }catch(e){if(deviceFlow===flow)$('signinStatus').textContent=`Sign-in failed: ${e.message}`}
+  }
+  function forgetSignin(){const saved=authSaved();if(saved?.grant)fetch('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token:saved.grant})}).catch(()=>{});try{localStorage.removeItem(AUTH_STORE)}catch{}clearTimeout(renewTimer)}
+  {const popupConnect=$('connect').onclick,baseDisconnect=$('disconnect').onclick;
+    $('connect').onclick=()=>state.token?sync():tvConfig?tvSignIn():popupConnect();
+    $('disconnect').onclick=()=>{const b=$('disconnect');if(b.textContent!=='Press again to sign out'){b.textContent='Press again to sign out';setTimeout(()=>{b.textContent='Disconnect'},4000);return}b.textContent='Disconnect';forgetSignin();baseDisconnect()};}
+  $('cancelSignin').onclick=closeSignin;
+  // On launch: if this device is already signed in, renew quietly and load the guide — no button press needed.
+  loadTvConfig().then(async()=>{if(await renewAccess()){$('status').textContent='Signed in · loading your channels…';sync()}});
+  // ── Saved lineup: the guide appears instantly from last time, then refreshes quietly in the background ──────
+  const LINEUP_STORE='nostalgiavision-lineup-v1',VIDEO_FRESH=30*MINUTE,GROUP_FRESH=6*HOUR;
+  let lineupTimer=null,renderTimer=null;
+  function saveLineup(){clearTimeout(lineupTimer);lineupTimer=setTimeout(()=>{
+    const subs=state.subs.map(c=>({id:c.id,youtubeId:c.youtubeId,name:c.name,uploadsPlaylist:c.uploadsPlaylist,topics:c.topics,...(c.loaded&&c.videos?.length?{videos:c.videos,loadedAt:c.loadedAt}:{})}));
+    try{localStorage.setItem(LINEUP_STORE,JSON.stringify({at:Date.now(),subs}))}
+    catch{try{localStorage.setItem(LINEUP_STORE,JSON.stringify({at:Date.now(),subs:subs.map(({videos,loadedAt,...c})=>c)}))}catch{}} // storage full: keep the lineup, drop the videos
+  },1500)}
+  function restoreLineup(){try{const saved=JSON.parse(localStorage.getItem(LINEUP_STORE)||'null');if(!saved?.subs?.length)return false;state.subs=saved.subs.map(c=>({...c,videos:c.videos||[],loaded:!!c.videos}));return true}catch{return false}}
+  // Many creators load at once (genre channels, first run), so they queue four at a time and the guide redraws once
+  // per burst instead of once per creator.
+  const loadQueue=[];let loadActive=0;
+  function ensureFresh(c,maxAge){
+    if(!state.token||!c?.uploadsPlaylist||c.loading||c.queued)return;
+    if(c.loaded&&Date.now()-(c.loadedAt||0)<maxAge)return;if(c.error&&Date.now()-(c.errorAt||0)<5*MINUTE)return;
+    c.queued=true;loadQueue.push(c);pumpLoads();
+  }
+  function pumpLoads(){while(loadActive<4&&loadQueue.length){const c=loadQueue.shift();c.queued=false;c.loaded=false;loadActive++;Promise.resolve(loadVideos(c)).finally(()=>{loadActive--;pumpLoads()})}}
+  function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(renderGuide,250)}
+
+  // ── Mixed channels never air the same creator twice in a row (as long as someone else is available) ─────────
+  // Walks the shuffled order, skipping whoever just aired; if one creator has so many shows left that the others can
+  // no longer separate them, that creator goes next (that look-ahead is what avoids a pile-up at the end).
+  function spreadCreators(list){
+    const pool=list.slice(),out=[],left=new Map();let last=null;
+    for(const v of pool)left.set(v.creatorId,(left.get(v.creatorId)||0)+1);
+    while(pool.length){
+      let most=null,mostN=0;for(const [id,n] of left)if(n>mostN){most=id;mostN=n}
+      let i=most!==last&&mostN*2>pool.length?pool.findIndex(v=>v.creatorId===most):pool.findIndex(v=>v.creatorId!==last);
+      if(i<0)i=0;const [v]=pool.splice(i,1);out.push(v);last=v.creatorId;
+      const n=left.get(last)-1;if(n)left.set(last,n);else left.delete(last);
+    }
+    return out;
+  }
+
+  // ── Creator channels: your own groups, plus genre channels built from YouTube's topic tags ──────────────────
+  // Each creator gets one primary genre (first match wins, most specific first). Groups and genres air the latest
+  // uploads of their top 20 members (by how much you watch them), shuffled with no back-to-back creators, and the
+  // lineup is "printed" once a day like For You so the schedule doesn't shift while it loads.
+  const GENRES=[
+    ['gaming','Gaming',/game|gaming/i],
+    ['music','Music',/music|hip_hop|rock|jazz|soul|reggae|electronic|country|classical|blues/i],
+    ['food','Food',/^food$/i],
+    ['sports','Sports',/sport|football|basketball|baseball|golf|hockey|tennis|boxing|martial|wrestling|volleyball|cricket|fitness/i],
+    ['tech','Tech',/^technology$/i],
+    ['news','News & Politics',/politics|military/i],
+    ['comedy','Comedy & Entertainment',/humour|entertainment|film|television|performing_arts/i],
+    ['lifestyle','Lifestyle',/lifestyle|fashion|tourism|hobby|vehicle|pet|health|attractiveness/i],
+    ['learning','Science & Learning',/knowledge/i],
+    ['culture','Culture & Society',/society|religion/i]];
+  const GROUP_MEMBERS=20,PER_MEMBER=3;
+  const genreName=key=>GENRES.find(g=>g[0]===key)?.[1]||'';
+  function genreOf(c){if(c._topics===c.topics)return c._genre;c._topics=c.topics;c._genre=null;for(const [key,,re] of GENRES)if((c.topics||[]).some(t=>re.test(t))){c._genre=key;break}return c._genre}
+  function buildGroup(def,no){
+    const order=ranked(),pos=new Map(order.map((c,i)=>[c,i])),byCreatorId=new Map(order.map(c=>[c.id,c]));
+    const members=(def.creatorIds?def.creatorIds.map(id=>byCreatorId.get(id)):order.filter(c=>genreOf(c)===def.genre)).filter(Boolean).sort((a,b)=>pos.get(a)-pos.get(b));
+    const top=members.slice(0,GROUP_MEMBERS),key=`${new Date().toDateString()}|${top.map(c=>c.id).join(',')}`,printed=state.printed[def.id];
+    let videos;
+    if(printed?.key===key&&printed.videos?.length)videos=spreadCreators(printed.videos); // lineups printed before a rule change still come out clean
+    else{
+      videos=spreadCreators(top.flatMap(c=>(c.videos||[]).filter(v=>v.id).slice(0,PER_MEMBER).map(v=>({...v,creator:c.name,creatorId:c.id}))).sort((a,b)=>hash(a.id)-hash(b.id)));
+      if(videos.length&&top.every(c=>c.loaded||c.error||!c.uploadsPlaylist)){state.printed[def.id]={key,videos};persist()}
+    }
+    const filling=state.printed[def.id]?.key!==key;
+    return {id:def.id,name:def.name,no,isGroup:true,genre:def.genre,def,members:top,allMembers:members,videos,
+      subtitle:`${members.length} creator${members.length===1?'':'s'}${filling&&state.token?' · filling…':' · no repeats'}`};
+  }
+  function groupChannels(){
+    const custom=state.groups.map((g,i)=>buildGroup(g,String(20+i).padStart(3,'0')));
+    if(!state.genreChannels||!state.subs.length)return custom;
+    const genres=GENRES.map(([key,name],i)=>({def:{id:`genre-${key}`,name,genre:key},no:String(50+i).padStart(3,'0')}))
+      .filter(g=>!state.hiddenGenres.includes(g.def.genre)).map(g=>buildGroup(g.def,g.no)).filter(g=>g.allMembers.length>=2);
+    return [...custom,...genres];
+  }
+  function groupById(id){return groupChannels().find(c=>c.id===id)}
+
+  // Detail-panel buttons for channels made of creators
+  function renderGroupBits(c){
+    const b=$('groupButton'),h=$('hideGroupButton');
+    b.textContent=c.isGroup?(c.genre?'Customize':'Edit channel'):'＋ Channel';
+    h.hidden=!c.isGroup;h.textContent=c.genre?'Hide channel':'Delete channel';
+  }
+  $('groupButton').onclick=()=>{const c=byId(state.selectedId);if(c?.isGroup)openGroupDialog(c.genre?{fromGenre:c.genre,name:c.name,ids:c.allMembers.map(m=>m.id)}:{editId:c.id});else openGroupDialog({ids:c&&!special(c.id)?[c.id]:[]})};
+  $('hideGroupButton').onclick=()=>{const c=byId(state.selectedId),b=$('hideGroupButton');if(!c?.isGroup)return;
+    if(c.genre)state.hiddenGenres.push(c.genre);
+    else{if(b.textContent!=='Press again to delete'){b.textContent='Press again to delete';return}state.groups=state.groups.filter(g=>g.id!==c.id);delete state.printed[c.id]}
+    persist();state.selectedId='for-you';renderGuide()};
+
+  // The channel editor: pick an existing channel or start a new one, name it, tick creators.
+  const draft={ids:new Set(),editId:null,fromGenre:null};
+  function openGroupDialog({editId=null,fromGenre=null,name='',ids=[]}={}){
+    stopPreview();draft.editId=editId;draft.fromGenre=fromGenre;
+    const g=editId&&state.groups.find(x=>x.id===editId);draft.ids=new Set(g?g.creatorIds:ids);
+    $('groupPick').innerHTML=`<option value="">＋ New channel</option>${state.groups.map(x=>`<option value="${clean(x.id)}">${clean(x.name)}</option>`).join('')}`;
+    $('groupPick').value=editId||'';$('groupName').value=g?g.name:(fromGenre?`My ${name}`:name);$('groupSearch').value='';
+    $('groupStatus').textContent=fromGenre?'Saving makes this your own channel and hides the automatic one.':'';
+    $('saveGroup').textContent=editId?'Save channel':'Make channel';
+    renderGroupList();$('groupOverlay').hidden=false;$('groupName').focus();
+  }
+  function renderGroupList(){
+    const q=$('groupSearch').value.trim().toLowerCase(),list=creators().filter(c=>!q||c.name.toLowerCase().includes(q));
+    list.sort((a,b)=>(draft.ids.has(b.id)-draft.ids.has(a.id))||a.name.localeCompare(b.name));
+    $('groupList').innerHTML=list.slice(0,150).map(c=>`<label class="check group-item"><input type="checkbox" data-id="${clean(c.id)}"${draft.ids.has(c.id)?' checked':''}> ${clean(c.name)}${genreOf(c)?`<small>${clean(genreName(genreOf(c)))}</small>`:''}</label>`).join('')
+      +(list.length>150?`<p class="mono">…${list.length-150} more · type to filter</p>`:'');
+    $('groupCount').textContent=`${draft.ids.size} picked`;
+  }
+  $('groupList').onchange=e=>{const id=e.target.dataset?.id;if(!id)return;if(e.target.checked)draft.ids.add(id);else draft.ids.delete(id);$('groupCount').textContent=`${draft.ids.size} picked`};
+  $('groupSearch').oninput=renderGroupList;
+  $('groupPick').onchange=e=>{const g=state.groups.find(x=>x.id===e.target.value);
+    if(g){const keep=[...draft.ids];draft.editId=g.id;draft.fromGenre=null;draft.ids=new Set([...g.creatorIds,...keep]);$('groupName').value=g.name;$('saveGroup').textContent='Save channel'}
+    else{draft.editId=null;$('saveGroup').textContent='Make channel'}
+    renderGroupList()};
+  function saveGroup(){
+    const name=$('groupName').value.trim()||'My channel';if(!draft.ids.size){$('groupStatus').textContent='Tick at least one creator.';return}
+    let id=draft.editId;
+    if(id){const g=state.groups.find(x=>x.id===id);g.name=name;g.creatorIds=[...draft.ids];delete state.printed[id]}
+    else{id=`grp-${Date.now().toString(36)}`;state.groups.push({id,name,creatorIds:[...draft.ids]})}
+    if(draft.fromGenre&&!state.hiddenGenres.includes(draft.fromGenre))state.hiddenGenres.push(draft.fromGenre);
+    persist();$('groupOverlay').hidden=true;state.query='';$('search').value='';state.selectedId=id;renderGuide();
+    document.querySelector(`.guide-row[data-id="${CSS.escape(id)}"]`)?.focus();
+  }
+  $('saveGroup').onclick=saveGroup;$('cancelGroup').onclick=()=>{$('groupOverlay').hidden=true};
+  $('genreToggle').checked=state.genreChannels;$('genreToggle').onchange=e=>{state.genreChannels=e.target.checked;persist();renderGuide()};
+  $('unhideGenres').onclick=()=>{state.hiddenGenres=[];persist();renderGuide();$('unhideGenres').textContent='Done'};
+
+  // D-pad in dialogs: ↑/↓ move between controls (a TV remote has no Tab key), OK ticks a checkbox.
+  function dialogNav(e,root){
+    const t=e.target;
+    if(e.key==='Enter'&&t.type==='checkbox'){e.preventDefault();t.click();return true}
+    if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return false;
+    const items=[...root.querySelectorAll('input,select,button,a[href]')].filter(x=>!x.disabled&&x.offsetParent!==null);
+    const i=items.indexOf(t),next=items[Math.max(0,Math.min(items.length-1,i+(e.key==='ArrowDown'?1:-1)))];
+    if(next){e.preventDefault();next.focus();next.scrollIntoView({block:'nearest'})}return true;
+  }
+  // ── Remote control on the guide screen ──────────────────────────────────────────────────────────────
+  // A TV remote has no mouse and no Tab key, so the guide works like a cable box: ↑/↓ move through channels, OK tunes,
+  // → opens that channel's options, and ↑ past the top row climbs to the tabs/search and then the header buttons,
+  // where ←/→ move sideways and ↓ comes back down.
+  const zones=()=>[
+    [...document.querySelectorAll('.header-actions button')],
+    [...document.querySelectorAll('.toolbar .pill'),$('search')]].map(z=>z.filter(el=>!el.hidden&&el.offsetParent!==null));
+  const selectedRow=()=>document.querySelector(`.guide-row[data-id="${CSS.escape(state.selectedId)}"]`)||document.querySelector('.guide-row');
+  function zoneNav(e){
+    const el=document.activeElement,all=zones(),z=all.findIndex(zone=>zone.includes(el));
+    const onRow=!!el?.closest?.('.guide-row');
+    if(onRow&&(e.key==='ArrowRight'||e.key==='ContextMenu')){e.preventDefault();state.selectedId=el.closest('.guide-row').dataset.id;openOptions();return true}
+    if(onRow&&e.key==='ArrowUp'&&el===document.querySelector('.guide-row')){e.preventDefault();const tabs=all[1];(tabs.find(b=>b.classList.contains('active'))||tabs[0])?.focus();return true}
+    if(z<0)return false;
+    const zone=all[z],i=zone.indexOf(el);
+    if(el===$('search')&&(e.key==='ArrowLeft'||e.key==='ArrowRight')&&el.value)return false; // moving the text cursor
+    if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();zone[Math.max(0,Math.min(zone.length-1,i+(e.key==='ArrowRight'?1:-1)))]?.focus();return true}
+    if(e.key==='ArrowUp'){e.preventDefault();if(z>0)(all[z-1].find(b=>b.classList.contains('primary'))||all[z-1][0])?.focus();return true}
+    if(e.key==='ArrowDown'){e.preventDefault();if(z<all.length-1)(all[z+1].find(b=>b.classList.contains('active'))||all[z+1][0])?.focus();else{const row=selectedRow();row?.focus();row?.scrollIntoView({block:'nearest'})}return true}
+    return false;
+  }
+  // The options menu mirrors whichever channel buttons apply right now, so it never drifts out of sync with them.
+  function openOptions(){
+    renderDetails();const c=byId(state.selectedId);if(!c)return;
+    const sources=[...document.querySelectorAll('#playerCard .detail-actions button')].filter(b=>!b.hidden&&b.id!=='stopPreviewButton');
+    $('optionsTitle').textContent=`CH ${channelNo(c)} · ${c.name}`;
+    $('optionsList').replaceChildren(...sources.map(src=>{const b=document.createElement('button');b.type='button';b.className='button'+(src.classList.contains('primary')?' primary':'');b.textContent=src.textContent;
+      b.onclick=()=>{const keepOpen=/Press again|Delete|Hide/.test(src.textContent);src.click();if(keepOpen&&/Press again/.test(src.textContent)){b.textContent=src.textContent;return}closeOptions()};return b}));
+    $('optionsOverlay').hidden=false;$('optionsList').querySelector('button')?.focus();
+  }
+  function closeOptions(){$('optionsOverlay').hidden=true;if([...document.querySelectorAll('.overlay')].every(o=>o.hidden))selectedRow()?.focus()}
+  $('closeOptions').onclick=closeOptions;
+  // The TV app's Back button calls this: close whatever is open (a menu, the show, the browse strip) and report true;
+  // false means the guide is already at its top level, so the app itself should exit.
+  if(!/wv/.test(navigator.userAgent)){
+    history.pushState({nvGuard:true},'');
+    addEventListener('popstate',()=>{if(window.nvBack()){history.pushState({nvGuard:true},'')}else history.back()});
+  }
+  window.nvBack=()=>{const open=['optionsOverlay','groupOverlay','listOverlay','settingsOverlay','signinOverlay','watchOverlay'].some(id=>!$(id).hidden);const inHeader=zones().some(z=>z.includes(document.activeElement));if(!open&&!inHeader)return false;if(inHeader&&!open){selectedRow()?.focus();return true}(document.activeElement||document.body).dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));return true};
+  // A focused cross-origin iframe swallows every remote key, so hand focus straight back to the watch panel.
+  window.addEventListener('blur',()=>{if($('watchOverlay').hidden)return;setTimeout(()=>{if(document.activeElement?.tagName==='IFRAME')$('watchPanel').focus({preventScroll:true})},0)});
+  window.onYouTubeIframeAPIReady=()=>{ytResolve();wrapPreview()};
+  ytReady.then(()=>activeDecks().forEach(deckPlayer)); // warm the decks so the first tune-in is quick
+  $('rows').onpointermove=e=>{const row=e.target.closest('.guide-row');if(row&&$('rows').contains(row)&&$('watchOverlay').hidden)queuePreview(row.dataset.id)};
+  $('nearby').onclick=e=>{const button=e.target.closest('button[data-id]');if(button)queuePreview(button.dataset.id)};
+  const sizeObserver=new ResizeObserver(()=>document.documentElement.style.setProperty('--guide-head-top',`${$('playerCard').offsetHeight+20}px`));sizeObserver.observe($('playerCard'));
+  const previewVisibility=new IntersectionObserver(entries=>{if(entries[0]?.intersectionRatio<.5&&previewId)stopPreview()},{threshold:[0,.5]});previewVisibility.observe($('poster'));
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)stopPreview()});
+  if(location.protocol==='file:')$('fileWarning').hidden=false;if(restoreLineup())$('status').textContent=`Saved lineup · ${state.subs.length} creators`;renderGuide();performance.mark('nv-guide-ready');setInterval(()=>{if(!$('watchOverlay').hidden)return;if(scheduleSig()!==lastSchedule)return renderGuide();const at=`${(Date.now()-windowStart())/HORIZON*100}%`;document.querySelectorAll('.now-line').forEach(line=>line.style.left=at);renderDetails()},15000);
+})();
+</script>
+<script>
+/* Retro dressing: clock, crawl, channel-change static, OSD, cable-box banner. Reads the guide's DOM only. */
+(() => {
+  'use strict';
+  const $=id=>document.getElementById(id);
+  const PREFS='nostalgiavision-retro-v1';
+  let prefs={crt:true,static:true};try{prefs={...prefs,...JSON.parse(localStorage.getItem(PREFS)||'{}')}}catch{}
+  const savePrefs=()=>{try{localStorage.setItem(PREFS,JSON.stringify(prefs))}catch{}};
+  const applyPrefs=()=>{document.body.classList.toggle('no-crt',!prefs.crt);$('crtToggle').checked=prefs.crt;$('staticToggle').checked=prefs.static};
+  $('crtToggle').onchange=e=>{prefs.crt=e.target.checked;savePrefs();applyPrefs()};
+  $('staticToggle').onchange=e=>{prefs.static=e.target.checked;savePrefs()};
+  applyPrefs();
+
+  // Clock + day label
+  function tick(){const now=new Date();$('clock').textContent=now.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}).replace(/\s?[AP]M$/i,'');$('guideDay').textContent=now.toLocaleDateString([],{weekday:'short',month:'numeric',day:'numeric'}).toUpperCase()}
+  tick();setInterval(tick,1000);
+
+  // Bottom crawl built from what's airing in the grid
+  const esc=s=>String(s).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+  let lastCrawl='';
+  function buildCrawl(){
+    const items=[...document.querySelectorAll('#rows .guide-row')].slice(0,14).map(row=>{
+      const no=row.querySelector('.channel-no')?.textContent,name=row.querySelector('.channel-name')?.textContent,now=row.querySelector('.slot.airing .slot-title')?.textContent;
+      return now?`<b>CH ${esc(no)}</b> ${esc(name)} <i>▸</i> ${esc(now)}`:'';
+    }).filter(Boolean);
+    const html=(items.length?items.join('&nbsp;&nbsp;✦&nbsp;&nbsp;'):'STAY TUNED ✦ YOUR CREATORS ARE ON THE AIR')+'&nbsp;&nbsp;✦&nbsp;&nbsp;';
+    if(html===lastCrawl)return;lastCrawl=html;
+    const el=$('crawl');el.innerHTML=html;el.style.setProperty('--crawl-time',`${Math.max(30,el.textContent.length*0.18)}s`);
+  }
+  let crawlTimer=null;
+  new MutationObserver(()=>{clearTimeout(crawlTimer);crawlTimer=setTimeout(buildCrawl,400)}).observe($('rows'),{childList:true});
+
+  // Preview monitor channel number
+  new MutationObserver(()=>{const m=$('detailChannel').textContent.match(/CHANNEL\s+(\d+)/);$('posterOsd').textContent=m?`CH ${m[1]}`:''}).observe($('detailChannel'),{childList:true,characterData:true,subtree:true});
+
+  // Static burst + channel click
+  const canvas=$('staticCanvas'),ctx=canvas.getContext('2d');let staticUntil=0,holdStatic=false,drawing=false,audio=null,bumperTimer=null;
+  function drawStatic(){
+    if(!holdStatic&&performance.now()>staticUntil){canvas.classList.remove('show');drawing=false;return}drawing=true;
+    const img=ctx.createImageData(canvas.width,canvas.height),d=img.data;
+    for(let i=0;i<d.length;i+=4){const v=Math.random()*255|0;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255}
+    ctx.putImageData(img,0,0);requestAnimationFrame(drawStatic);
+  }
+  function hiss(ms){
+    try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();const len=audio.sampleRate*ms/1000|0,buf=audio.createBuffer(1,len,audio.sampleRate),ch=buf.getChannelData(0);
+      for(let i=0;i<len;i++)ch[i]=(Math.random()*2-1)*(1-i/len)*(i<audio.sampleRate*.012?1:.35);
+      const src=audio.createBufferSource(),gain=audio.createGain();gain.gain.value=.12;src.buffer=buf;src.connect(gain).connect(audio.destination);src.start()}catch{}
+  }
+  function zap(){if(!prefs.static)return;staticUntil=performance.now()+420;canvas.classList.add('show');if(!drawing)drawStatic();hiss(380)}
+  // The player announces tuning / on-air: channel changes hold the static until the new channel is really playing,
+  // program changes that weren't pre-rolled get a "stay tuned" card instead of YouTube's loading spinner.
+  document.addEventListener('nv:tuning',e=>{if(e.detail?.kind==='channel'){holdStatic=true;$('videoBox').classList.add('tuning');zap()}else if(!e.detail?.primed){clearTimeout(bumperTimer);bumperTimer=setTimeout(()=>{$('videoBox').classList.add('tuning');$('bumperTitle').textContent=$('watchTitle').textContent;$('bumper').classList.add('show')},200)}});
+  document.addEventListener('nv:onair',()=>{holdStatic=false;staticUntil=0;$('videoBox').classList.remove('tuning');clearTimeout(bumperTimer);$('bumper').classList.remove('show')});
+
+  // OSD + info banner, like a cable box
+  let osdTimer=null,bannerTimer=null,lastChannel='';
+  function showBanner(){$('banner').classList.remove('tucked');$('watchPanel').classList.add('squeeze');clearTimeout(bannerTimer);bannerTimer=setTimeout(tuckBanner,5000)}
+  function tuckBanner(){if($('banner').contains(document.activeElement)){bannerTimer=setTimeout(tuckBanner,2000);return}$('banner').classList.add('tucked');$('watchPanel').classList.remove('squeeze');$('osd').classList.remove('show')}
+  function onTune(){
+    if($('watchOverlay').hidden){lastChannel='';return}
+    const label=$('watchChannel').textContent,m=label.match(/CH\s+(\d+)\s*·\s*(.*)/);
+    const channel=m?m[1]:label;
+    lastChannel=channel;
+    $('osd').innerHTML=m?`${esc(m[1])}<small>${esc(m[2]).toUpperCase()}</small>`:esc(label);
+    $('osd').classList.add('show');clearTimeout(osdTimer);osdTimer=setTimeout(()=>$('osd').classList.remove('show'),3000);
+    showBanner();
+  }
+  new MutationObserver(onTune).observe($('watchChannel'),{childList:true,characterData:true,subtree:true});
+  new MutationObserver(onTune).observe($('watchOverlay'),{attributes:true,attributeFilter:['hidden']});
+  $('watchOverlay').addEventListener('pointermove',showBanner);
+  $('banner').addEventListener('focusin',showBanner);
+
+  // In a browser on the TV (Chrome/Firefox), the address bar eats the top of the screen. Pages may only go full screen
+  // in response to a key press or click, so the first remote press does it. The TV app's web view ("wv") is already
+  // full screen and doesn't support this, so it's skipped there.
+  const goFullScreen=()=>{if(document.fullscreenElement||/\bwv\b/.test(navigator.userAgent)||!document.documentElement.requestFullscreen)return;document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})};
+  document.addEventListener('keydown',goFullScreen,true);document.addEventListener('click',goFullScreen,true);
+
+  // Remote: CH up/down surf, any other key wakes the banner
+  document.addEventListener('keydown',e=>{
+    if($('watchOverlay').hidden||!$('settingsOverlay').hidden)return;
+    if(e.key==='ArrowUp'||e.key==='ChannelUp'||e.key==='PageUp'){e.preventDefault();$('nextChannel').click()}
+    else if(e.key==='ArrowDown'||e.key==='ChannelDown'||e.key==='PageDown'){e.preventDefault();$('prevChannel').click()}
+    else showBanner();
+  });
+})();
+</script>
+<script src="https://www.youtube.com/iframe_api" async></script>
+</body>
+</html>
