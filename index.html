@@ -1268,8 +1268,8 @@
   // The player announces tuning / on-air: channel changes hold the static until the new channel is really playing,
   // program changes that weren't pre-rolled get a "stay tuned" card instead of YouTube's loading spinner.
   let cutPending=false;
-  document.addEventListener('nv:tuning',e=>{if(e.detail?.behind){cutPending=true;showBanner();return}if(e.detail?.kind==='channel'){holdStatic=true;$('videoBox').classList.add('tuning');zap()}else if(!e.detail?.primed){clearTimeout(bumperTimer);bumperTimer=setTimeout(()=>{$('videoBox').classList.add('tuning');$('bumperTitle').textContent=$('watchTitle').textContent;$('bumper').classList.add('show')},200)}});
-  document.addEventListener('nv:onair',()=>{holdStatic=false;staticUntil=0;$('videoBox').classList.remove('tuning');clearTimeout(bumperTimer);$('bumper').classList.remove('show');if(cutPending){cutPending=false;zap()}});
+  document.addEventListener('nv:tuning',e=>{if(e.detail?.behind){cutPending=true;clearTimeout(osdTimer);$('osd').classList.add('show');tuckBanner();return}if(e.detail?.kind==='channel'){holdStatic=true;$('videoBox').classList.add('tuning');zap()}else if(!e.detail?.primed){clearTimeout(bumperTimer);bumperTimer=setTimeout(()=>{$('videoBox').classList.add('tuning');$('bumperTitle').textContent=$('watchTitle').textContent;$('bumper').classList.add('show')},200)}});
+  document.addEventListener('nv:onair',()=>{holdStatic=false;staticUntil=0;$('videoBox').classList.remove('tuning');clearTimeout(bumperTimer);$('bumper').classList.remove('show');if(cutPending){cutPending=false;zap();showBanner();clearTimeout(osdTimer);osdTimer=setTimeout(()=>$('osd').classList.remove('show'),3000)}});
 
   // OSD + info banner, like a cable box
   let osdTimer=null,bannerTimer=null,lastChannel='';
@@ -1281,8 +1281,9 @@
     const channel=m?m[1]:label;
     lastChannel=channel;
     $('osd').innerHTML=m?`${esc(m[1])}<small>${esc(m[2]).toUpperCase()}</small>`:esc(label);
-    $('osd').classList.add('show');clearTimeout(osdTimer);osdTimer=setTimeout(()=>$('osd').classList.remove('show'),3000);
-    showBanner();
+    $('osd').classList.add('show');clearTimeout(osdTimer);
+    // a channel change that keeps the old picture up shows just the number until the new channel is on
+    setTimeout(()=>{if(cutPending)return;osdTimer=setTimeout(()=>$('osd').classList.remove('show'),3000);showBanner()},0);
   }
   new MutationObserver(onTune).observe($('watchChannel'),{childList:true,characterData:true,subtree:true});
   new MutationObserver(onTune).observe($('watchOverlay'),{attributes:true,attributeFilter:['hidden']});
