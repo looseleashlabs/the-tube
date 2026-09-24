@@ -1006,7 +1006,10 @@
     // Browsers skip history entries a page adds before you've pressed anything, so the guard entry is added again on
     // the first remote press (and after every Back it catches). Two guard entries deep, one stray Back never leaves.
     history.pushState({nvGuard:true},'');
-    const armGuard=()=>{removeEventListener('keydown',armGuard,true);removeEventListener('click',armGuard,true);history.pushState({nvGuard:true},'')};
+    // The first press also starts a show that was tuned without one (?ch= from Home Assistant): browsers hold sound-on
+    // playback until the viewer has pressed something, so it sits paused until then.
+    const armGuard=e=>{removeEventListener('keydown',armGuard,true);removeEventListener('click',armGuard,true);history.pushState({nvGuard:true},'');
+      const pl=onAir===null?null:decks[onAir].player;if(pl?.getPlayerState?.()===2&&!(e.type==='keydown'&&['Enter',' ','k','MediaPlayPause'].includes(e.key))){pl.unMute();pl.playVideo()}};
     addEventListener('keydown',armGuard,true);addEventListener('click',armGuard,true);
     let leaveArmed=0;addEventListener('popstate',()=>{if(window.nvBack()){history.pushState({nvGuard:true},'');return}if(Date.now()-leaveArmed<3000){history.back();return}leaveArmed=Date.now();toast('Press Back again to leave The Tube');history.pushState({nvGuard:true},'')});
   }
