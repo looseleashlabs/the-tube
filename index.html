@@ -512,7 +512,7 @@
     if(d.mode==='preload'||d.mode==='standby'){d.mode='idle';d.primed=false;d.videoId=null;d.role=null;return}
     if(d.mode!=='arming'&&d.mode!=='air')return;
     clearTimeout(d.armTimer);if(d.seq!==tuneSeq&&d.mode==='arming'){d.mode='idle';return}
-    resetWatchClock();state.playerErrors++;
+    resetWatchClock();state.playerErrors++;if(state.playerErrors===2&&/Firefox/.test(navigator.userAgent))toast('Shows not starting? Click the shield in the address bar and turn off Tracking Protection for this site');
     if(state.playerErrors<4)advanceProgram();else{emit('nv:onair');$('watchMessage').textContent='This channel cannot play here. Try another channel.'}
   }
   // Put a program on a standby deck; it cuts to air the moment it is really playing. A deck already parked on the
