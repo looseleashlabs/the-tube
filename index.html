@@ -261,7 +261,7 @@
 <div class="overlay" id="optionsOverlay" hidden><div class="settings options" role="dialog" aria-modal="true" aria-labelledby="optionsTitle"><h2 id="optionsTitle">Options</h2><div class="options-list" id="optionsList"></div><button class="button" id="closeOptions" type="button">Close</button></div></div>
 <div class="overlay" id="groupOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="groupTitle"><h2 id="groupTitle">Creator channel</h2><label for="groupPick">Channel</label><select id="groupPick"></select><label for="groupName">Name</label><input class="search" id="groupName" placeholder="TECH NIGHT_" autocomplete="off"><label for="groupSearch">Creators · <span id="groupCount">0 picked</span></label><input class="search" id="groupSearch" placeholder="FILTER_" autocomplete="off"><div class="group-list" id="groupList"></div><p class="mono" id="groupStatus" role="status"></p><div class="detail-actions"><button class="button primary" id="saveGroup" type="button">Make channel</button><button class="button" id="cancelGroup" type="button">Cancel</button></div></div></div>
 <div class="overlay" id="listOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="listTitle"><h2 id="listTitle">New list channel</h2><p>Everything a creator posted on a day (or a stretch of days) that you haven't finished yet. Each video drops off once you've watched 90% of it here.</p><label for="listCreator">Creator</label><input class="search" id="listCreator" list="creatorOptions" placeholder="START TYPING A NAME_" autocomplete="off"><datalist id="creatorOptions"></datalist><label class="check"><input type="checkbox" id="listAuto"> Keep recording new uploads</label><div id="autoOpts" hidden><label for="listKeep">Erase each video after</label><select id="listKeep"><option value="24">24 hours</option><option value="72">3 days</option><option value="168">7 days</option><option value="336">14 days</option></select></div><div id="dayOpts"><label for="listFrom">Posted on</label><input class="search" type="date" id="listFrom"><label for="listTo">Through (optional)</label><input class="search" type="date" id="listTo"></div><label class="check"><input type="checkbox" id="listShorts"> Include Shorts</label><p id="listStatus" class="mono" role="status"></p><div class="detail-actions"><button class="button primary" id="createList" type="button">Make channel</button><button class="button" id="cancelList" type="button">Cancel</button></div></div></div>
-<div class="overlay" id="settingsOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><h2 id="settingsTitle">Cable box setup</h2><label class="check"><input type="checkbox" id="crtToggle" checked> CRT scanlines</label><label class="check"><input type="checkbox" id="staticToggle" checked> Static + click on channel change</label><label for="qualitySelect">Picture</label><select id="qualitySelect"><option value="2160">Sharpest (asks YouTube for up to 4K)</option><option value="1080">HD (up to 1080p)</option><option value="auto">Let YouTube decide</option></select><label class="check"><input type="checkbox" id="preloadToggle" checked> Pre-load channels above and below (turn off if the TV stutters)</label><label class="check"><input type="checkbox" id="genreToggle" checked> Genre channels (built from YouTube's topic tags)</label><button class="button" id="unhideGenres" type="button">Unhide genre channels</button><label for="vcrAuto">VCR auto-records my top</label><select id="vcrAuto"><option value="0">Nobody (only ● Record)</option><option value="3">3 creators</option><option value="5">5 creators</option><option value="10">10 creators</option></select><h2 style="margin-top:22px">For You channel</h2><p>Mix recent videos from your most opened creators in this guide. YouTube's standard API does not expose watch history.</p><label for="topCount">How many creators in the mix?</label><select id="topCount"><option value="5">Top 5</option><option value="12">Top 12</option><option value="25">Top 25</option><option value="50">Top 50</option></select><p>Favorite a creator to move them toward the front. To use your viewing history, get a YouTube activity JSON export from <a href="https://takeout.google.com/" target="_blank" rel="noopener noreferrer">Google Takeout</a>, then import its <strong>watch-history.json</strong> file here. The file is read locally in this browser and is not uploaded to the guide server.</p><label for="historyFile">Import watch-history.json</label><input id="historyFile" type="file" accept=".json,application/json"><p id="historyImportStatus" role="status">No history file imported.</p><button class="button primary" id="closeSettings" type="button">Done</button></div></div>
+<div class="overlay" id="settingsOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><h2 id="settingsTitle">Cable box setup</h2><label class="check"><input type="checkbox" id="crtToggle" checked> CRT scanlines</label><label class="check"><input type="checkbox" id="staticToggle" checked> Static + click on channel change</label><label for="qualitySelect">Picture</label><select id="qualitySelect"><option value="2160">Sharpest (asks YouTube for up to 4K)</option><option value="1080">HD (up to 1080p)</option><option value="auto">Let YouTube decide</option></select><label class="check"><input type="checkbox" id="preloadToggle" checked> Pre-load channels above and below (turn off if the TV stutters)</label><label class="check"><input type="checkbox" id="genreToggle" checked> Genre channels (built from YouTube's topic tags)</label><button class="button" id="unhideGenres" type="button">Unhide genre channels</button><label for="vcrAuto">VCR auto-records my top</label><select id="vcrAuto"><option value="0">Nobody (only ● Record)</option><option value="3">3 creators</option><option value="5">5 creators</option><option value="10">10 creators</option></select><h2 style="margin-top:22px">Household sync</h2><p>Your channels, lists, VCR and watched history are shared by every device signed in with this Google account.</p><p class="mono" id="syncStatus" role="status"></p><div class="detail-actions"><button class="button" id="syncNow" type="button">Sync now</button><button class="button primary" id="syncConsent" type="button" hidden>Turn on sync</button></div><h2 style="margin-top:22px">For You channel</h2><p>Mix recent videos from your most opened creators in this guide. YouTube's standard API does not expose watch history.</p><label for="topCount">How many creators in the mix?</label><select id="topCount"><option value="5">Top 5</option><option value="12">Top 12</option><option value="25">Top 25</option><option value="50">Top 50</option></select><p>Favorite a creator to move them toward the front. To use your viewing history, get a YouTube activity JSON export from <a href="https://takeout.google.com/" target="_blank" rel="noopener noreferrer">Google Takeout</a>, then import its <strong>watch-history.json</strong> file here. The file is read locally in this browser and is not uploaded to the guide server.</p><label for="historyFile">Import watch-history.json</label><input id="historyFile" type="file" accept=".json,application/json"><p id="historyImportStatus" role="status">No history file imported.</p><button class="button primary" id="closeSettings" type="button">Done</button></div></div>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 (() => {
@@ -278,7 +278,7 @@
   let lastNearby='',lastSchedule='',previewId=null,previewTimer=null,previewPlayer=null,previewReady=false,previewVideoId=null,previewRequest=null,watchedVideoId=null,watchTimer=null,watchRemaining=30000,watchStartedAt=0;
   const snapshot=()=>JSON.stringify({...saved,counts:state.counts,seen:state.seen,historyCounts:state.historyCounts,historyNames:state.historyNames,historyImport:state.historyImport,favorites:[...state.favorites],topN:state.topN,mixCache:state.mixCache,lists:state.lists,done:state.done,vcr:state.vcr,preloadNeighbors:state.preloadNeighbors,groups:state.groups,hiddenGenres:state.hiddenGenres,genreChannels:state.genreChannels,printed:state.printed,quality:state.quality});
   // Storage can be full, blocked or missing on a TV WebView; trim seen history and retry once, never throw.
-  const persist=()=>{try{localStorage.setItem(STORE,snapshot())}catch{try{state.seen=Object.fromEntries(Object.entries(state.seen).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,5000));localStorage.setItem(STORE,snapshot())}catch{}}};
+  const persist=()=>{try{scheduleCloudSync()}catch{}try{localStorage.setItem(STORE,snapshot())}catch{try{state.seen=Object.fromEntries(Object.entries(state.seen).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,5000));localStorage.setItem(STORE,snapshot())}catch{}}};
   const seenToday=id=>Number(state.seen[id]||0)>=new Date().setHours(0,0,0,0);
   const seenLabel=id=>seenToday(id)?'✓ SEEN TODAY':state.seen[id]?'✓ SEEN BEFORE':'';
   const isNew=v=>v?.published>0&&Date.now()-v.published<48*HOUR;
@@ -370,7 +370,7 @@
       const warm=[...new Set([...ranked().slice(0,24),...recordedCreators()])];
       for(const c of warm)ensureFresh(c,VIDEO_FRESH);
       while(loadActive||loadQueue.length)await new Promise(r=>setTimeout(r,300));
-      $('status').textContent=`Connected · ${found.length} creators`;$('connect').textContent='Refresh guide';$('disconnect').hidden=false;renderGuide();
+      $('status').textContent=`Connected · ${found.length} creators`;cloudSync();$('connect').textContent='Refresh guide';$('disconnect').hidden=false;renderGuide();
     }catch(e){$('status').textContent=`Sync failed: ${e.message}`}
   }
   function connect(){if(location.protocol==='file:'){$('fileWarning').hidden=false;return}if(!window.google?.accounts?.oauth2){$('status').textContent='Google sign-in is loading. Try again.';return}try{const client=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:'https://www.googleapis.com/auth/youtube.readonly',callback:r=>{if(r.error){$('status').textContent=`Sign-in failed: ${r.error}`;return}state.token=r.access_token;sync()}});client.requestAccessToken({prompt:''})}catch(e){$('status').textContent=`Could not sign in: ${e.message}`}}
@@ -549,7 +549,7 @@
     }catch(e){$('listStatus').textContent=`Could not build the list: ${e.message}`}finally{$('createList').disabled=false}
   }
   $('listAuto').onchange=e=>{$('autoOpts').hidden=!e.target.checked;$('dayOpts').hidden=e.target.checked};$('newListButton').onclick=openListDialog;$('createList').onclick=createList;$('cancelList').onclick=()=>{$('listOverlay').hidden=true};
-  $('deleteListButton').onclick=()=>{const c=byId(state.selectedId),b=$('deleteListButton');if(!c?.isList)return;if(b.textContent!=='Press again to delete'){b.textContent='Press again to delete';return}state.lists=state.lists.filter(l=>l.id!==c.id);persist();state.selectedId='for-you';renderGuide()};
+  $('deleteListButton').onclick=()=>{const c=byId(state.selectedId),b=$('deleteListButton');if(!c?.isList)return;if(b.textContent!=='Press again to delete'){b.textContent='Press again to delete';return}state.tombstones[c.id]=Date.now();saveSyncMeta();state.lists=state.lists.filter(l=>l.id!==c.id);persist();state.selectedId='for-you';renderGuide()};
   {const baseSeen=$('seenButton').onclick;$('seenButton').onclick=()=>{const c=byId(state.selectedId);if(!c?.isList&&!c?.isVcr)return baseSeen();const p=positionAt(c);if(p){markSeen(p.video.id);markDone(p.video.id)}}}
   // ── VCR: the list that runs itself ─────────────────────────────────────────────────────────────────
   // Creators on "timer record" (the ones you press ● Record on, plus your top N automatically) get every new upload
@@ -625,27 +625,34 @@
   // ── TV-style sign-in ────────────────────────────────────────────────────────────────────────────
   // Google's sign-in for TVs: the screen shows a short code, you approve it on your phone at google.com/device, and the
   // app keeps a long-lived grant in this device's storage so it stays signed in and renews itself. Needs a
-  // "TVs and Limited Input devices" OAuth client in nostalgiavision.config.json; without one, the old pop-up is used.
-  const AUTH_STORE='nostalgiavision-auth-v1';
-  let tvConfig=null,renewTimer=null,deviceFlow=null;
-  const authSaved=()=>{try{return JSON.parse(localStorage.getItem(AUTH_STORE)||'null')}catch{return null}};
+  // "TVs and Limited Input devices" OAuth client in config.json; without one, the old pop-up is used.
+  // Google won't combine YouTube and Drive permissions in one TV approval, so household sync is a second, separate
+  // grant with its own token: approving it is optional, and the guide works fine without it.
+  const GRANTS={
+    youtube:{store:'nostalgiavision-auth-v1',scope:'https://www.googleapis.com/auth/youtube.readonly',title:'Sign in with your phone',
+      apply:t=>{state.token=t},done:()=>sync(),revoked:()=>{$('status').textContent='Sign-in was revoked · press Connect'}},
+    sync:{store:'nostalgiavision-sync-auth-v1',scope:'https://www.googleapis.com/auth/drive.file',title:'Turn on household sync',
+      apply:t=>{syncToken=t},done:()=>cloudSync(),revoked:()=>{syncState={note:'Sync approval was removed: press "Turn on sync".',at:0,needsConsent:true};renderSyncStatus()}}};
+  let tvConfig=null,deviceFlow=null,syncToken=null;const renewTimers={};
+  const grantSaved=kind=>{try{return JSON.parse(localStorage.getItem(GRANTS[kind].store)||'null')}catch{return null}};
   const oauth=async(url,params)=>{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(params)});return {ok:r.ok,body:await r.json().catch(()=>({}))}};
   async function loadTvConfig(){try{const r=await fetch('config.json',{cache:'no-store'});const j=r.ok?await r.json():{};if(j.tvClientId&&j.tvClientSecret&&!/PASTE/.test(j.tvClientId+j.tvClientSecret))tvConfig=j}catch{}}
-  function scheduleRenew(seconds){clearTimeout(renewTimer);renewTimer=setTimeout(renewAccess,Math.max(60,(Number(seconds)||3600)-300)*1000)}
-  async function renewAccess(){
-    const saved=authSaved();if(!saved?.grant||!tvConfig)return false;
+  function scheduleRenew(kind,seconds){clearTimeout(renewTimers[kind]);renewTimers[kind]=setTimeout(()=>renewGrant(kind),Math.max(60,(Number(seconds)||3600)-300)*1000)}
+  async function renewGrant(kind){
+    const saved=grantSaved(kind),g=GRANTS[kind];if(!saved?.grant||!tvConfig)return false;
     try{
       const {ok,body}=await oauth('https://oauth2.googleapis.com/token',{client_id:tvConfig.tvClientId,client_secret:tvConfig.tvClientSecret,refresh_token:saved.grant,grant_type:'refresh_token'});
-      if(!ok){if(body.error==='invalid_grant'){try{localStorage.removeItem(AUTH_STORE)}catch{}$('status').textContent='Sign-in was revoked · press Connect'}return false}
-      state.token=body.access_token;scheduleRenew(body.expires_in);return true;
+      if(!ok){if(body.error==='invalid_grant'){try{localStorage.removeItem(g.store)}catch{}g.revoked()}return false}
+      g.apply(body.access_token);scheduleRenew(kind,body.expires_in);return true;
     }catch{return false}
   }
+  const renewAccess=()=>renewGrant('youtube'),renewSync=()=>renewGrant('sync');
   function closeSignin(){deviceFlow=null;$('signinOverlay').hidden=true}
-  async function tvSignIn(){
-    stopPreview();$('signinOverlay').hidden=false;$('signinCode').textContent='· · · ·';$('signinUrl').textContent='google.com/device';$('signinStatus').textContent='Getting a code…';
+  async function tvSignIn(kind='youtube'){
+    const g=GRANTS[kind];stopPreview();$('signinOverlay').hidden=false;$('signinTitle').textContent=g.title;$('signinCode').textContent='· · · ·';$('signinUrl').textContent='google.com/device';$('signinStatus').textContent='Getting a code…';
     const flow={};deviceFlow=flow;
     try{
-      const {ok,body}=await oauth('https://oauth2.googleapis.com/device/code',{client_id:tvConfig.tvClientId,scope:'https://www.googleapis.com/auth/youtube.readonly'});
+      const {ok,body}=await oauth('https://oauth2.googleapis.com/device/code',{client_id:tvConfig.tvClientId,scope:g.scope});
       if(!ok)throw new Error(body.error_description||body.error||'Google refused the request');
       if(deviceFlow!==flow)return;
       $('signinCode').textContent=body.user_code;$('signinUrl').textContent=String(body.verification_url||'google.com/device').replace(/^https?:\/\//,'');$('signinStatus').textContent='Waiting for you to approve on your phone…';
@@ -654,15 +661,15 @@
         await new Promise(r=>setTimeout(r,wait));if(deviceFlow!==flow)return;
         const res=await oauth('https://oauth2.googleapis.com/token',{client_id:tvConfig.tvClientId,client_secret:tvConfig.tvClientSecret,device_code:body.device_code,grant_type:'urn:ietf:params:oauth:grant-type:device_code'});
         if(res.ok){
-          try{localStorage.setItem(AUTH_STORE,JSON.stringify({grant:res.body.refresh_token,at:Date.now()}))}catch{}
-          state.token=res.body.access_token;scheduleRenew(res.body.expires_in);closeSignin();sync();return;
+          try{localStorage.setItem(g.store,JSON.stringify({grant:res.body.refresh_token,at:Date.now()}))}catch{}
+          g.apply(res.body.access_token);scheduleRenew(kind,res.body.expires_in);closeSignin();g.done();return;
         }
         if(res.body.error==='slow_down')wait+=5000;else if(res.body.error!=='authorization_pending')throw new Error(res.body.error_description||res.body.error);
       }
-      if(deviceFlow===flow)$('signinStatus').textContent='That code expired. Close and press Connect for a new one.';
+      if(deviceFlow===flow)$('signinStatus').textContent='That code expired. Close and try again for a new one.';
     }catch(e){if(deviceFlow===flow)$('signinStatus').textContent=`Sign-in failed: ${e.message}`}
   }
-  function forgetSignin(){const saved=authSaved();if(saved?.grant)fetch('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token:saved.grant})}).catch(()=>{});try{localStorage.removeItem(AUTH_STORE)}catch{}clearTimeout(renewTimer)}
+  function forgetSignin(){for(const [kind,g] of Object.entries(GRANTS)){const saved=grantSaved(kind);if(saved?.grant)fetch('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token:saved.grant})}).catch(()=>{});try{localStorage.removeItem(g.store)}catch{}clearTimeout(renewTimers[kind])}syncToken=null}
   {const popupConnect=$('connect').onclick,baseDisconnect=$('disconnect').onclick;
     $('connect').onclick=()=>state.token?sync():tvConfig?tvSignIn():popupConnect();
     $('disconnect').onclick=()=>{const b=$('disconnect');if(b.textContent!=='Press again to sign out'){b.textContent='Press again to sign out';setTimeout(()=>{b.textContent='Disconnect'},4000);return}b.textContent='Disconnect';forgetSignin();baseDisconnect()};}
@@ -754,7 +761,7 @@
   $('groupButton').onclick=()=>{const c=byId(state.selectedId);if(c?.isGroup)openGroupDialog(c.genre?{fromGenre:c.genre,name:c.name,ids:c.allMembers.map(m=>m.id)}:{editId:c.id});else openGroupDialog({ids:c&&!special(c.id)?[c.id]:[]})};
   $('hideGroupButton').onclick=()=>{const c=byId(state.selectedId),b=$('hideGroupButton');if(!c?.isGroup)return;
     if(c.genre)state.hiddenGenres.push(c.genre);
-    else{if(b.textContent!=='Press again to delete'){b.textContent='Press again to delete';return}state.groups=state.groups.filter(g=>g.id!==c.id);delete state.printed[c.id]}
+    else{if(b.textContent!=='Press again to delete'){b.textContent='Press again to delete';return}state.tombstones[c.id]=Date.now();saveSyncMeta();state.groups=state.groups.filter(g=>g.id!==c.id);delete state.printed[c.id]}
     persist();state.selectedId='for-you';renderGuide()};
 
   // The channel editor: pick an existing channel or start a new one, name it, tick creators.
@@ -784,8 +791,8 @@
   function saveGroup(){
     const name=$('groupName').value.trim()||'My channel';if(!draft.ids.size){$('groupStatus').textContent='Tick at least one creator.';return}
     let id=draft.editId;
-    if(id){const g=state.groups.find(x=>x.id===id);g.name=name;g.creatorIds=[...draft.ids];delete state.printed[id]}
-    else{id=`grp-${Date.now().toString(36)}`;state.groups.push({id,name,creatorIds:[...draft.ids]})}
+    if(id){const g=state.groups.find(x=>x.id===id);g.at=Date.now();g.name=name;g.creatorIds=[...draft.ids];delete state.printed[id]}
+    else{id=`grp-${Date.now().toString(36)}`;state.groups.push({id,name,creatorIds:[...draft.ids],at:Date.now()})}
     if(draft.fromGenre&&!state.hiddenGenres.includes(draft.fromGenre))state.hiddenGenres.push(draft.fromGenre);
     persist();$('groupOverlay').hidden=true;state.query='';$('search').value='';state.selectedId=id;renderGuide();
     document.querySelector(`.guide-row[data-id="${CSS.escape(id)}"]`)?.focus();
@@ -842,6 +849,92 @@
     addEventListener('popstate',()=>{if(window.nvBack()){history.pushState({nvGuard:true},'')}else history.back()});
   }
   window.nvBack=()=>{const open=['optionsOverlay','groupOverlay','listOverlay','settingsOverlay','signinOverlay','watchOverlay'].some(id=>!$(id).hidden);const inHeader=zones().some(z=>z.includes(document.activeElement));if(!open&&!inHeader)return false;if(inHeader&&!open){selectedRow()?.focus();return true}(document.activeElement||document.body).dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));return true};
+  // ── Household sync ──────────────────────────────────────────────────────────────────────────────────
+  // Everything you build (channels, lists, VCR, favorites, watched history, resume points) lives in one small file in
+  // the signed-in account's Google Drive ("The Tube – household sync"), so every device on that account shares it.
+  // It's found by a hidden tag rather than its name, so renaming or moving it in Drive doesn't break anything. Each sync pulls
+  // the file, merges it with this device's copy, and pushes the result back:
+  //  - channels and lists: the newer edit of each one wins; a delete (tombstone) beats any older edit
+  //  - watched / done / resume / tune-in counts: combined, keeping the latest value
+  //  - settings (favorites, hidden genres, VCR rules, …): whichever device changed them most recently wins
+  // Screen-only preferences (scanlines, static, picture size) stay per device.
+  const SYNC_STORE='nostalgiavision-sync-v1',SYNC_FILE='The Tube – household sync',DRIVE='https://www.googleapis.com';
+  let syncMeta={};try{syncMeta=JSON.parse(localStorage.getItem(SYNC_STORE)||'{}')}catch{}
+  const saveSyncMeta=()=>{try{localStorage.setItem(SYNC_STORE,JSON.stringify(syncMeta))}catch{}};
+  let syncing=null,syncTimer=null,syncState={note:'Sync starts after you connect YouTube.',at:0};
+  state.tombstones=syncMeta.tombstones=syncMeta.tombstones||{};
+  const newest=(obj,n)=>Object.fromEntries(Object.entries(obj||{}).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,n));
+  const maxMerge=(a={},b={})=>{const out={...a};for(const [k,v] of Object.entries(b))if(!(k in out)||Number(v)>Number(out[k]))out[k]=v;return out};
+  function settingsObj(){return {favorites:[...state.favorites].sort(),topN:state.topN,quality:state.quality,preloadNeighbors:state.preloadNeighbors,genreChannels:state.genreChannels,hiddenGenres:[...state.hiddenGenres].sort(),
+    vcr:{passes:state.vcr.passes,since:state.vcr.since,autoTop:state.vcr.autoTop},history:{counts:state.historyCounts,names:state.historyNames,import:state.historyImport}}}
+  function applySettings(x){state.favorites=new Set(x.favorites||[]);Object.assign(state,{topN:x.topN??state.topN,quality:x.quality??state.quality,preloadNeighbors:x.preloadNeighbors??state.preloadNeighbors,genreChannels:x.genreChannels??state.genreChannels,hiddenGenres:x.hiddenGenres||[]});
+    Object.assign(state.vcr,{passes:x.vcr?.passes||{},since:x.vcr?.since||{},autoTop:x.vcr?.autoTop??state.vcr.autoTop});
+    if(x.history){state.historyCounts=x.history.counts||{};state.historyNames=x.history.names||{};state.historyImport=x.history.import||null}}
+  // A settings edit is detected by comparing against what was last synced, so no setting needs its own timestamp.
+  function noteSettingsChange(){const now=JSON.stringify(settingsObj());if(now!==syncMeta.settingsJSON){syncMeta.settingsJSON=now;syncMeta.settingsAt=Date.now();saveSyncMeta()}}
+  function localDoc(){
+    noteSettingsChange();
+    return {v:1,settingsAt:syncMeta.settingsAt||0,settings:settingsObj(),
+      lists:Object.fromEntries(state.lists.map(l=>[l.id,{...l,at:l.at||l.created||0}])),groups:Object.fromEntries(state.groups.map(g=>[g.id,{...g,at:g.at||0}])),
+      tombstones:state.tombstones,done:newest(state.done,20000),seen:newest(state.seen,5000),resume:resumeMap,counts:state.counts,recs:state.vcr.recs};
+  }
+  function mergeItems(mine={},theirs={},tomb,unionVideos){
+    const out={};for(const id of new Set([...Object.keys(mine),...Object.keys(theirs)])){
+      const a=mine[id],b=theirs[id],pick=!a?b:!b?a:(b.at>a.at?b:a);
+      if(tomb[id]&&tomb[id]>=(pick.at||0))continue;
+      out[id]=unionVideos&&a&&b?{...pick,videos:[...new Map([...a.videos,...b.videos].map(v=>[v.id,v])).values()].sort((x,y)=>x.published-y.published)}:pick;
+    }return out;
+  }
+  function applyRemote(r){
+    const tomb=maxMerge(state.tombstones,r.tombstones);state.tombstones=syncMeta.tombstones=tomb;
+    if((r.settingsAt||0)>(syncMeta.settingsAt||0)){applySettings(r.settings||{});syncMeta.settingsAt=r.settingsAt;syncMeta.settingsJSON=JSON.stringify(settingsObj())}
+    const byOrder=(items,prev)=>{const known=prev.map(x=>x.id).filter(id=>items[id]);return [...known,...Object.keys(items).filter(id=>!known.includes(id)).sort()].map(id=>items[id])};
+    const mine=localDoc();
+    state.lists=byOrder(mergeItems(mine.lists,r.lists,tomb,true),state.lists);
+    state.groups=byOrder(mergeItems(mine.groups,r.groups,tomb,false),state.groups);
+    state.done=maxMerge(state.done,r.done);state.seen=maxMerge(state.seen,r.seen);state.counts=maxMerge(state.counts,r.counts);
+    for(const [id,t] of Object.entries(r.resume||{}))if(!(id in resumeMap))resumeMap[id]=t;try{localStorage.setItem(RESUME_STORE,JSON.stringify(resumeMap))}catch{}
+    for(const [id,rec] of Object.entries(r.recs||{}))if(!state.vcr.recs[id]&&!state.done[id])state.vcr.recs[id]=rec;
+    saveSyncMeta();persist();
+  }
+  async function drive(url,opts={}){
+    const go=()=>fetch(url,{...opts,headers:{...(opts.headers||{}),Authorization:`Bearer ${syncToken}`}});
+    let r=await go();if(r.status===401&&await renewSync())r=await go();
+    if(!r.ok){const j=await r.json().catch(()=>({}));const reason=j.error?.errors?.[0]?.reason||j.error?.status||'';const e=new Error(j.error?.message||`Drive ${r.status}`);e.reason=reason;e.status=r.status;throw e}
+    return r;
+  }
+  async function cloudSync(){
+    if(!syncToken&&!await renewSync()){syncState={note:'Off on this device: press "Turn on sync" and approve the code.',at:0,needsConsent:!!tvConfig};renderSyncStatus();return}if(syncing)return syncing;
+    syncing=(async()=>{
+      try{
+        syncState={note:'Syncing…',at:syncState.at};renderSyncStatus();
+        if(!syncMeta.fileId){const list=await (await drive(`${DRIVE}/drive/v3/files?fields=files(id)&orderBy=modifiedTime desc&q=${encodeURIComponent("appProperties has { key='theTube' and value='household' } and trashed=false")}`)).json();syncMeta.fileId=list.files?.[0]?.id||null;saveSyncMeta()}
+        if(syncMeta.fileId){
+          try{applyRemote(await (await drive(`${DRIVE}/drive/v3/files/${syncMeta.fileId}?alt=media`)).json())}
+          catch(e){if(e.status!==404)throw e;syncMeta.fileId=null} // file was removed elsewhere: start a fresh one
+        }
+        const body=JSON.stringify(localDoc());
+        if(body!==syncMeta.lastPushed||!syncMeta.fileId){
+          if(syncMeta.fileId)await drive(`${DRIVE}/upload/drive/v3/files/${syncMeta.fileId}?uploadType=media`,{method:'PATCH',headers:{'Content-Type':'application/json'},body});
+          else{const form=new FormData();form.append('metadata',new Blob([JSON.stringify({name:SYNC_FILE,mimeType:'application/json',description:'Channels, lists and VCR for The Tube. Shared by every device on this account. Safe to move or rename, just keep it (deleting it resets sync).',appProperties:{theTube:'household'}})],{type:'application/json'}));form.append('file',new Blob([body],{type:'application/json'}));
+            syncMeta.fileId=(await (await drive(`${DRIVE}/upload/drive/v3/files?uploadType=multipart&fields=id`,{method:'POST',body:form})).json()).id}
+          syncMeta.lastPushed=body;saveSyncMeta();
+        }
+        syncState={note:'Synced',at:Date.now()};renderGuide();
+      }catch(e){
+        syncState={at:syncState.at,note:e.reason==='insufficientPermissions'||e.status===403&&/scope/i.test(e.message)?'Needs one more approval: press "Turn on sync".':
+          e.reason==='accessNotConfigured'||/has not been used|is disabled/i.test(e.message)?'Google Drive API is off in Google Cloud: enable it, then Sync now.':`Sync failed: ${e.message}`,needsConsent:e.reason==='insufficientPermissions'||/scope/i.test(e.message)};
+      }finally{syncing=null;renderSyncStatus()}
+    })();
+    return syncing;
+  }
+  // Local edits sync a few seconds later; other devices' edits arrive every 2 minutes and whenever the screen wakes.
+  function scheduleCloudSync(){if(!syncToken)return;clearTimeout(syncTimer);syncTimer=setTimeout(cloudSync,4000)}
+  setInterval(()=>{if(!document.hidden)cloudSync()},2*MINUTE);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)cloudSync()});
+  function renderSyncStatus(){const ago=syncState.at?` · last synced ${Math.max(0,Math.round((Date.now()-syncState.at)/MINUTE))} min ago`:'';$('syncStatus').textContent=`${syncState.note}${syncState.note==='Synced'?ago:''}`;$('syncConsent').hidden=!syncState.needsConsent}
+  $('syncNow').onclick=()=>cloudSync();
+  $('syncConsent').onclick=()=>{$('settingsOverlay').hidden=true;if(tvConfig)tvSignIn('sync')};
   // A focused cross-origin iframe swallows every remote key, so hand focus straight back to the watch panel.
   window.addEventListener('blur',()=>{if($('watchOverlay').hidden)return;setTimeout(()=>{if(document.activeElement?.tagName==='IFRAME')$('watchPanel').focus({preventScroll:true})},0)});
   window.onYouTubeIframeAPIReady=()=>{ytResolve();wrapPreview()};
