@@ -287,9 +287,9 @@
     {id:'sample-b',name:'Discovery Channel',videos:[{id:'M7lc1UVf-VE',title:'A sample scheduled program',duration:1344}]}
   ];
   let saved={};try{saved=JSON.parse(localStorage.getItem(STORE)||'{}')}catch{}
-  const state={subs:[],token:null,counts:saved.counts||{},seen:saved.seen||{},historyCounts:saved.historyCounts||{},historyNames:saved.historyNames||{},historyImport:saved.historyImport||null,favorites:new Set(saved.favorites||[]),topN:Number(saved.topN)||12,mixCache:saved.mixCache||null,lists:saved.lists||[],done:saved.done||{},vcr:{passes:{},recs:{},since:{},autoTop:5,...saved.vcr},preloadNeighbors:saved.preloadNeighbors??true,groups:saved.groups||[],hiddenGenres:saved.hiddenGenres||[],genreChannels:saved.genreChannels??true,discover:saved.discover||null,lastWatched:saved.lastWatched||{},discoverHidden:saved.discoverHidden||[],printed:saved.printed||{},synced:false,quality:saved.quality||'2160',unplayable:new Set(),mode:'featured',query:'',limit:60,selectedId:'for-you',playingId:null,player:null,pending:null,playerErrors:0};
+  const state={subs:[],token:null,counts:saved.counts||{},seen:saved.seen||{},historyCounts:saved.historyCounts||{},historyNames:saved.historyNames||{},historyImport:saved.historyImport||null,favorites:new Set(saved.favorites||[]),topN:Number(saved.topN)||12,quotaUntil:saved.quotaUntil||0,pendingSubs:saved.pendingSubs||[],mixCache:saved.mixCache||null,lists:saved.lists||[],done:saved.done||{},vcr:{passes:{},recs:{},since:{},autoTop:5,...saved.vcr},preloadNeighbors:saved.preloadNeighbors??true,groups:saved.groups||[],hiddenGenres:saved.hiddenGenres||[],genreChannels:saved.genreChannels??true,discover:saved.discover||null,lastWatched:saved.lastWatched||{},discoverHidden:saved.discoverHidden||[],printed:saved.printed||{},synced:false,quality:saved.quality||'2160',unplayable:new Set(),mode:'featured',query:'',limit:60,selectedId:'for-you',playingId:null,player:null,pending:null,playerErrors:0};
   let lastNearby='',lastSchedule='',previewId=null,previewTimer=null,previewPlayer=null,previewReady=false,previewVideoId=null,previewRequest=null,watchedVideoId=null,watchTimer=null,watchRemaining=30000,watchStartedAt=0;
-  const snapshot=()=>JSON.stringify({...saved,counts:state.counts,seen:state.seen,historyCounts:state.historyCounts,historyNames:state.historyNames,historyImport:state.historyImport,favorites:[...state.favorites],topN:state.topN,mixCache:state.mixCache,lists:state.lists,done:state.done,vcr:state.vcr,preloadNeighbors:state.preloadNeighbors,groups:state.groups,hiddenGenres:state.hiddenGenres,genreChannels:state.genreChannels,printed:state.printed,discover:state.discover,discoverHidden:state.discoverHidden,lastWatched:state.lastWatched,quality:state.quality});
+  const snapshot=()=>JSON.stringify({...saved,counts:state.counts,seen:state.seen,historyCounts:state.historyCounts,historyNames:state.historyNames,historyImport:state.historyImport,favorites:[...state.favorites],topN:state.topN,quotaUntil:state.quotaUntil,pendingSubs:state.pendingSubs,mixCache:state.mixCache,lists:state.lists,done:state.done,vcr:state.vcr,preloadNeighbors:state.preloadNeighbors,groups:state.groups,hiddenGenres:state.hiddenGenres,genreChannels:state.genreChannels,printed:state.printed,discover:state.discover,discoverHidden:state.discoverHidden,lastWatched:state.lastWatched,quality:state.quality});
   // Storage can be full, blocked or missing on a TV WebView; trim seen history and retry once, never throw.
   const persist=()=>{try{scheduleCloudSync()}catch{}try{localStorage.setItem(STORE,snapshot())}catch{try{state.seen=Object.fromEntries(Object.entries(state.seen).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,5000));localStorage.setItem(STORE,snapshot())}catch{}}};
   const seenToday=id=>Number(state.seen[id]||0)>=new Date().setHours(0,0,0,0);
@@ -355,12 +355,48 @@
     document.querySelectorAll('.guide-row').forEach(row=>{row.onclick=e=>{state.selectedId=row.dataset.id;if(e.target.closest('.channel-cell')){openOptions();return}renderDetails();tune(row.dataset.id)};row.onfocus=()=>queuePreview(row.dataset.id);row.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();tune(row.dataset.id)}}});if(focusedId)document.querySelector(`.guide-row[data-id="${CSS.escape(focusedId)}"]`)?.focus({preventScroll:true});lastSchedule=scheduleSig();
     if(state.token){for(const c of items){if(c.isGroup)c.members.forEach(m=>ensureFresh(m,GROUP_FRESH));else if(!special(c.id))ensureFresh(c,VIDEO_FRESH)}}renderDetails();
   }
-  async function api(path,params,renewed){const url=new URL(`https://www.googleapis.com/youtube/v3/${path}`);for(const [k,v] of Object.entries(params))if(v!==undefined&&v!==null)url.searchParams.set(k,String(v));const r=await fetch(url,{headers:{Authorization:`Bearer ${state.token}`}}),j=await r.json();if(r.status===401&&!renewed&&await renewAccess())return api(path,params,true);if(r.status===401){state.token=null;$('connect').textContent='Reconnect';$('status').textContent='Sign-in expired · press Reconnect';throw new Error('Sign-in expired')}if(!r.ok)throw new Error(j.error?.message||`YouTube API ${r.status}`);return j}
-  async function loadVideos(c){if(!c.uploadsPlaylist||!state.token||c.loaded)return;if(c.error){if(Date.now()-c.errorAt<5*MINUTE)return;c.error=null}if(c.loading)return c.loading;c.loading=(async()=>{try{const list=await api('playlistItems',{part:'snippet,contentDetails',playlistId:c.uploadsPlaylist,maxResults:30});const items=(list.items||[]).map(x=>({id:x.snippet?.resourceId?.videoId,title:x.snippet?.title||'Untitled',published:Date.parse(x.contentDetails?.videoPublishedAt||x.snippet?.publishedAt)||0})).filter(x=>x.id&&x.title!=='Private video'&&x.title!=='Deleted video');if(items.length){const info=await api('videos',{part:'contentDetails,status,snippet',id:items.map(x=>x.id).join(',')});const details=new Map((info.items||[]).map(x=>[x.id,x]));c.videos=items.filter(x=>{const d=details.get(x.id);return d&&d.status?.embeddable!==false&&d.status?.madeForKids!==true&&(d.snippet?.liveBroadcastContent||'none')==='none'&&!/#shorts?/i.test(x.title)}).map(x=>({...x,duration:duration(details.get(x.id)?.contentDetails?.duration)})).filter(x=>x.duration>=MIN_PROGRAM)}else c.videos=[];c.loaded=true;c.loadedAt=Date.now();saveLineup();vcrCapture(c)}catch(e){c.error=e.message;c.errorAt=Date.now();if(state.token)$('status').textContent=`Could not load ${c.name}: ${e.message}`}finally{c.loading=null;scheduleRender()}})();return c.loading}
+  async function api(path,params,renewed){const url=new URL(`https://www.googleapis.com/youtube/v3/${path}`);for(const [k,v] of Object.entries(params))if(v!==undefined&&v!==null)url.searchParams.set(k,String(v));const r=await fetch(url,{headers:{Authorization:`Bearer ${state.token}`}}),j=await r.json();if(r.status===401&&!renewed&&await renewAccess())return api(path,params,true);if(r.status===401){state.token=null;$('connect').textContent='Reconnect';$('status').textContent='Sign-in expired · press Reconnect';throw new Error('Sign-in expired')}if(!r.ok&&/quota/i.test(j.error?.errors?.[0]?.reason||'')){pauseQuota();throw new Error('YouTube daily limit reached')}if(!r.ok)throw new Error(String(j.error?.message||`YouTube API ${r.status}`).replace(/<[^>]*>/g,''));return j}
+  // Refreshing a creator costs one cheap call (their recent uploads). Video details (length, embeddable, Short or not)
+  // never change, so they're only fetched for uploads this creator hasn't been checked for before; rejects (Shorts,
+  // too short, not embeddable) are remembered too so they aren't re-checked every time.
+  async function loadVideos(c){
+    if(!c.uploadsPlaylist||!state.token||c.loaded||quotaPaused())return;
+    if(c.error){if(Date.now()-c.errorAt<5*MINUTE)return;c.error=null}
+    if(c.loading)return c.loading;
+    c.loading=(async()=>{
+      try{
+        const list=await api('playlistItems',{part:'snippet,contentDetails',playlistId:c.uploadsPlaylist,maxResults:30});
+        const items=(list.items||[]).map(x=>({id:x.snippet?.resourceId?.videoId,title:x.snippet?.title||'Untitled',published:Date.parse(x.contentDetails?.videoPublishedAt||x.snippet?.publishedAt)||0})).filter(x=>x.id&&x.title!=='Private video'&&x.title!=='Deleted video');
+        const known=new Map((c.videos||[]).map(v=>[v.id,v])),skip=new Set(c.skip||[]),fresh=items.filter(x=>!known.has(x.id)&&!skip.has(x.id)),checked=new Map();
+        if(fresh.length){const info=await api('videos',{part:'contentDetails,status,snippet',id:fresh.map(x=>x.id).join(',')});for(const d of info.items||[])checked.set(d.id,d)}
+        const rejected=[];
+        c.videos=items.flatMap(x=>{
+          if(known.has(x.id))return [{...known.get(x.id),title:x.title}];
+          if(skip.has(x.id))return [];
+          const d=checked.get(x.id),live=(d?.snippet?.liveBroadcastContent||'none')!=='none';
+          const ok=d&&!live&&d.status?.embeddable!==false&&d.status?.madeForKids!==true&&!/#shorts?/i.test(x.title),len=ok?duration(d.contentDetails?.duration):0;
+          if(!ok||len<MIN_PROGRAM){if(d&&!live)rejected.push(x.id);return []} // upcoming premieres get another look later
+          return [{...x,duration:len}];
+        });
+        c.skip=[...new Set([...rejected,...(c.skip||[])])].slice(0,90);
+        c.loaded=true;c.loadedAt=Date.now();saveLineup();vcrCapture(c);
+      }catch(e){c.error=e.message;c.errorAt=Date.now();if(state.token&&!quotaPaused())$('status').textContent=`Could not load ${c.name}: ${e.message}`}
+      finally{c.loading=null;scheduleRender()}
+    })();
+    return c.loading;
+  }
+  // YouTube allows the project a daily budget of API calls, reset at midnight Pacific. When it runs out, lookups pause
+  // until the reset (everything already loaded keeps playing) instead of failing creator by creator.
+  const quotaPaused=()=>Date.now()<(state.quotaUntil||0);
+  function pauseQuota(){
+    const pt=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Los_Angeles'})),untilMidnight=((24-pt.getHours())*3600-pt.getMinutes()*60-pt.getSeconds())*1000;
+    state.quotaUntil=Date.now()+untilMidnight+2*MINUTE;persist();
+    $('status').textContent=`YouTube's daily limit reached · new videos resume ${new Date(state.quotaUntil).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`;
+  }
   // Refresh the lineup from YouTube. Creators already on screen (from the saved lineup) keep their schedules while
   // this runs, so the guide never goes blank; only what changed gets fetched.
   async function sync(){
-    if(!state.token)return;
+    if(!state.token)return;if(quotaPaused()){pauseQuota();$('connect').textContent='Refresh guide';$('disconnect').hidden=false;cloudSync();return}
     $('status').textContent=state.subs.length?`${state.subs.length} creators · checking for changes…`:'Reading subscriptions…';
     try{
       const known=new Map(state.subs.map(c=>[c.id,c])),found=[];let page,pages=0;
@@ -384,7 +420,7 @@
       const warm=[...new Set([...ranked().slice(0,24),...recordedCreators()])];
       for(const c of warm)ensureFresh(c,VIDEO_FRESH);
       while(loadActive||loadQueue.length)await new Promise(r=>setTimeout(r,300));
-      $('status').textContent=`Connected · ${found.length} creators`;Promise.resolve(cloudSync()).finally(()=>runDiscovery());$('connect').textContent='Refresh guide';$('disconnect').hidden=false;renderGuide();
+      $('status').textContent=`Connected · ${found.length} creators`;Promise.resolve(cloudSync()).finally(()=>{runDiscovery();if(grantSaved('manage'))for(const p of state.pendingSubs||[])subscribeTo(p)});$('connect').textContent='Refresh guide';$('disconnect').hidden=false;renderGuide();
     }catch(e){$('status').textContent=`Sync failed: ${e.message}`}
   }
   function connect(){if(location.protocol==='file:'){$('fileWarning').hidden=false;return}if(!window.google?.accounts?.oauth2){$('status').textContent='Google sign-in is loading. Try again.';return}try{const client=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:'https://www.googleapis.com/auth/youtube.readonly',callback:r=>{if(r.error){$('status').textContent=`Sign-in failed: ${r.error}`;return}state.token=r.access_token;sync()}});client.requestAccessToken({prompt:''})}catch(e){$('status').textContent=`Could not sign in: ${e.message}`}}
@@ -598,7 +634,7 @@
   function renderRecButton(c){const b=$('recButton');b.hidden=!c||special(c.id);if(b.hidden)return;const pass=state.vcr.passes[c.id];b.textContent=isRecorded(c)?(pass==='always'?'● Recording':`● Rec (Top ${state.vcr.autoTop})`):'○ Record';b.classList.toggle('rec-on',isRecorded(c))}
   $('recButton').onclick=()=>{const c=byId(state.selectedId);if(!c||special(c.id))return;state.vcr.passes[c.id]=isRecorded(c)?'never':'always';if(state.vcr.passes[c.id]==='always')state.vcr.since[c.id]=Date.now();else delete state.vcr.since[c.id];persist();if(isRecorded(c)){if(c.loaded)vcrCapture(c);else loadVideos(c)}renderGuide()};
   // keep taping while the TV sits on: re-check recorded creators for new uploads every 30 minutes
-  setInterval(()=>{if(!state.token)return;for(const c of recordedCreators()){c.loaded=false;loadVideos(c)}},30*MINUTE);
+  setInterval(()=>{if(!state.token)return;for(const c of recordedCreators())ensureFresh(c,2*HOUR)},30*MINUTE);
   $('qualitySelect').value=state.quality;$('qualitySelect').onchange=e=>{state.quality=e.target.value;persist();fitDecks()};fitDecks();
   $('preloadToggle').checked=state.preloadNeighbors;$('preloadToggle').onchange=e=>{state.preloadNeighbors=e.target.checked;persist();if(state.preloadNeighbors)activeDecks().forEach(deckPlayer)};
   $('vcrAuto').value=String(state.vcr.autoTop);$('vcrAuto').onchange=e=>{state.vcr.autoTop=Number(e.target.value);persist();for(const c of recordedCreators())if(c.loaded)vcrCapture(c);renderGuide()};
@@ -693,10 +729,10 @@
   // On launch: if this device is already signed in, renew quietly and load the guide — no button press needed.
   loadTvConfig().then(async()=>{if(await renewAccess()){$('status').textContent='Signed in · loading your channels…';sync()}});
   // ── Saved lineup: the guide appears instantly from last time, then refreshes quietly in the background ──────
-  const LINEUP_STORE='nostalgiavision-lineup-v1',VIDEO_FRESH=30*MINUTE,GROUP_FRESH=6*HOUR;
+  const LINEUP_STORE='nostalgiavision-lineup-v1',VIDEO_FRESH=3*HOUR,GROUP_FRESH=12*HOUR;
   let lineupTimer=null,renderTimer=null;
   function saveLineup(){clearTimeout(lineupTimer);lineupTimer=setTimeout(()=>{
-    const subs=state.subs.map(c=>({id:c.id,youtubeId:c.youtubeId,name:c.name,uploadsPlaylist:c.uploadsPlaylist,topics:c.topics,...(c.loaded&&c.videos?.length?{videos:c.videos,loadedAt:c.loadedAt}:{})}));
+    const subs=state.subs.map(c=>({id:c.id,youtubeId:c.youtubeId,name:c.name,uploadsPlaylist:c.uploadsPlaylist,topics:c.topics,...(c.loaded&&c.videos?.length?{videos:c.videos,loadedAt:c.loadedAt,skip:c.skip}:{})}));
     try{localStorage.setItem(LINEUP_STORE,JSON.stringify({at:Date.now(),subs}))}
     catch{try{localStorage.setItem(LINEUP_STORE,JSON.stringify({at:Date.now(),subs:subs.map(({videos,loadedAt,...c})=>c)}))}catch{}} // storage full: keep the lineup, drop the videos
   },1500)}
@@ -705,7 +741,7 @@
   // per burst instead of once per creator.
   const loadQueue=[];let loadActive=0;
   function ensureFresh(c,maxAge){
-    if(!state.token||!c?.uploadsPlaylist||c.loading||c.queued)return;
+    if(!state.token||!c?.uploadsPlaylist||c.loading||c.queued||quotaPaused())return;
     if(c.loaded&&Date.now()-(c.loadedAt||0)<maxAge)return;if(c.error&&Date.now()-(c.errorAt||0)<5*MINUTE)return;
     c.queued=true;loadQueue.push(c);pumpLoads();
   }
@@ -898,10 +934,10 @@
   const newest=(obj,n)=>Object.fromEntries(Object.entries(obj||{}).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,n));
   const maxMerge=(a={},b={})=>{const out={...a};for(const [k,v] of Object.entries(b))if(!(k in out)||Number(v)>Number(out[k]))out[k]=v;return out};
   function settingsObj(){return {favorites:[...state.favorites].sort(),topN:state.topN,quality:state.quality,preloadNeighbors:state.preloadNeighbors,genreChannels:state.genreChannels,hiddenGenres:[...state.hiddenGenres].sort(),
-    vcr:{passes:state.vcr.passes,since:state.vcr.since,autoTop:state.vcr.autoTop},history:{counts:state.historyCounts,names:state.historyNames,import:state.historyImport,lastWatched:state.lastWatched},discover:state.discover,discoverHidden:[...(state.discoverHidden||[])].sort()}}
+    vcr:{passes:state.vcr.passes,since:state.vcr.since,autoTop:state.vcr.autoTop},history:{counts:state.historyCounts,names:state.historyNames,import:state.historyImport,lastWatched:state.lastWatched},discover:state.discover,discoverHidden:[...(state.discoverHidden||[])].sort(),pendingSubs:state.pendingSubs||[]}}
   function applySettings(x){state.favorites=new Set(x.favorites||[]);Object.assign(state,{topN:x.topN??state.topN,quality:x.quality??state.quality,preloadNeighbors:x.preloadNeighbors??state.preloadNeighbors,genreChannels:x.genreChannels??state.genreChannels,hiddenGenres:x.hiddenGenres||[]});
     Object.assign(state.vcr,{passes:x.vcr?.passes||{},since:x.vcr?.since||{},autoTop:x.vcr?.autoTop??state.vcr.autoTop});
-    if(x.discover!==undefined)state.discover=x.discover;if(x.discoverHidden)state.discoverHidden=x.discoverHidden;if(x.history){state.lastWatched=x.history.lastWatched||state.lastWatched;state.historyCounts=x.history.counts||{};state.historyNames=x.history.names||{};state.historyImport=x.history.import||null}}
+    if(x.discover!==undefined)state.discover=x.discover;if(x.pendingSubs)state.pendingSubs=x.pendingSubs;if(x.discoverHidden)state.discoverHidden=x.discoverHidden;if(x.history){state.lastWatched=x.history.lastWatched||state.lastWatched;state.historyCounts=x.history.counts||{};state.historyNames=x.history.names||{};state.historyImport=x.history.import||null}}
   // A settings edit is detected by comparing against what was last synced, so no setting needs its own timestamp.
   function noteSettingsChange(){const now=JSON.stringify(settingsObj());if(now!==syncMeta.settingsJSON){syncMeta.settingsJSON=now;syncMeta.settingsAt=Date.now();saveSyncMeta()}}
   function localDoc(){
@@ -983,7 +1019,7 @@
     ["Circuit Board",["@JeffGeerling","@Fireship","@TwoMinutePapers","@aiexplained-official","@GamersNexus","@Level1Techs","@Dave2D","@mkbhd","@ThePrimeTimeagen","@HardwareHaven","@CraftComputing","@AndrejKarpathy","@DwarkeshPatel","@bycloudAI"]],
     ["Save Point",["@NoclipDocs","@Razbuten","@ScottTheWoz","@NitroRad","@JosephAndersonChannel","@pannenkoek2012","@StopSkeletonFight"]],
     ["Late Night",["@SomeMoreNews","@LastWeekTonight","@Danny-Gonzalez","@taylortomlinson","@KnowingBetter","@Wendoverproductions","@HowtoADHD","@DrTraceyMarks"]]];
-  const DISCOVERY_DAY=24*HOUR,SCOUTS=120,discLive=new Map();
+  const DISCOVERY_DAY=24*HOUR,SCOUTS=60,discLive=new Map();
   let discovering=null;
   const subscribedIds=()=>new Set(state.subs.map(c=>c.youtubeId));
   // Discovered creators are plain creator objects (same shape as subscriptions), kept alive for the session so their
@@ -991,7 +1027,7 @@
   const liveCreator=x=>{let c=discLive.get(x.id);if(!c){c={...x,videos:[],loaded:false,discovered:true};discLive.set(x.id,c)}return c};
   const creatorFrom=ch=>({id:`yt-${ch.id}`,youtubeId:ch.id,name:ch.snippet?.title||'Creator',thumb:ch.snippet?.thumbnails?.medium?.url||ch.snippet?.thumbnails?.default?.url||'',uploadsPlaylist:ch.contentDetails?.relatedPlaylists?.uploads,topics:(ch.topicDetails?.topicCategories||[]).map(u=>decodeURIComponent(u.split('/wiki/')[1]||''))});
   async function runDiscovery(force){
-    if(!state.token||discovering)return discovering;
+    if(!state.token||discovering||quotaPaused())return discovering;
     const d=state.discover||{};if(!force&&d.at&&Date.now()-d.at<DISCOVERY_DAY&&d.curated)return;
     discovering=(async()=>{
       const before=$('status').textContent;$('status').textContent='Scouting new creators…';
@@ -1060,7 +1096,7 @@
     $('lineupNote').textContent=`${members.length} creator${members.length===1?'':'s'}${members.length>ch.members.length?` · the ${ch.members.length} marked ▶ are on the schedule right now`:''}`;
     $('lineupList').innerHTML=members.map(c=>{
       const v=c.videos?.[0],thumb=v?`<img src="https://i.ytimg.com/vi/${encodeURIComponent(v.id)}/mqdefault.jpg" alt="" loading="lazy">`:/^https:\/\/yt\d*\.(ggpht|googleusercontent)\.com\//.test(c.thumb||'')?`<img class="avatar" src="${clean(c.thumb)}" alt="" loading="lazy">`:'<span class="lineup-blank">▶</span>',g=genreOf(c);
-      return `<div class="lineup-row" data-id="${clean(c.id)}">${thumb}<div class="lineup-info"><strong>${airing.has(c.id)?'▶ ':''}${clean(c.name)}</strong><span>${clean(whyOnChannel(ch,c))}${g?` · ${clean(genreName(g))}`:''}</span>${v?`<small>Latest: ${clean(v.title)}</small>`:''}</div>${ch.discovery?`<div class="lineup-actions">${tvConfig?`<button class="button primary" type="button" data-sub="${clean(c.id)}">${subscribedAlready(c)?'✓ Subscribed':'＋ Subscribe'}</button>`:''}<button class="button" type="button" data-hide="${clean(c.id)}">Not interested</button></div>`:''}</div>`;
+      return `<div class="lineup-row" data-id="${clean(c.id)}">${thumb}<div class="lineup-info"><strong>${airing.has(c.id)?'▶ ':''}${clean(c.name)}</strong><span>${clean(whyOnChannel(ch,c))}${g?` · ${clean(genreName(g))}`:''}</span>${v?`<small>Latest: ${clean(v.title)}</small>`:''}</div>${ch.discovery?`<div class="lineup-actions">${tvConfig?`<button class="button primary" type="button" data-sub="${clean(c.id)}">${subscribedAlready(c)?'✓ Subscribed':(state.pendingSubs||[]).some(p=>p.youtubeId===c.youtubeId)?'Queued · after reset':'＋ Subscribe'}</button>`:''}<button class="button" type="button" data-hide="${clean(c.id)}">Not interested</button></div>`:''}</div>`;
     }).join('')||'<p class="mono">Nobody here yet.</p>';
     $('lineupOverlay').hidden=false;($('lineupList').querySelector('button')||$('closeLineup')).focus();
   }
@@ -1076,6 +1112,7 @@
   // approval: the first Subscribe on a device shows a code once, then it's instant. A new subscription moves the creator
   // out of discovery and into the lineup like any other creator you follow.
   let pendingSubscribe=null;
+  const plainText=t=>String(t||'').replace(/<[^>]*>/g,'').trim();
   const subscribedAlready=c=>state.subs.some(s=>s.youtubeId===c.youtubeId);
   async function subscribeTo(c,button){
     if(!c?.youtubeId||!tvConfig)return;
@@ -1086,7 +1123,13 @@
       const send=()=>fetch('https://www.googleapis.com/youtube/v3/subscriptions?part=snippet',{method:'POST',headers:{Authorization:`Bearer ${manageToken}`,'Content-Type':'application/json'},body:JSON.stringify({snippet:{resourceId:{kind:'youtube#channel',channelId:c.youtubeId}}})});
       let r=await send();if(r.status===401&&await renewGrant('manage'))r=await send();
       const j=await r.json().catch(()=>({}));
-      if(!r.ok&&j.error?.errors?.[0]?.reason!=='subscriptionDuplicate')throw new Error(j.error?.message||`YouTube ${r.status}`);
+      const reason=j.error?.errors?.[0]?.reason||'';
+      if(!r.ok&&/quota/i.test(reason)){ // out of today's YouTube budget: queue it, it goes through after the reset
+        pauseQuota();state.pendingSubs=[...(state.pendingSubs||[]).filter(p=>p.youtubeId!==c.youtubeId),(({discovered,videos,loaded,loading,queued,...keep})=>keep)(c)];persist();
+        if(button){button.disabled=true;button.textContent='Queued · subscribes after reset'}return;
+      }
+      if(!r.ok&&reason!=='subscriptionDuplicate')throw new Error(plainText(j.error?.message)||`YouTube ${r.status}`);
+      state.pendingSubs=(state.pendingSubs||[]).filter(p=>p.youtubeId!==c.youtubeId);
       const {discovered,mentions,vouchedBy,...plain}=c;
       state.subs.push({...plain,videos:c.videos||[],loaded:!!c.loaded,loadedAt:c.loadedAt});saveLineup();rankCache=null;
       for(const k of Object.keys(state.printed))if(k.startsWith('disc-'))delete state.printed[k];persist();renderGuide();
