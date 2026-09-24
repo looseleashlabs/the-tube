@@ -313,7 +313,7 @@
 <div class="overlay" id="optionsOverlay" hidden><div class="settings options" role="dialog" aria-modal="true" aria-labelledby="optionsTitle"><h2 id="optionsTitle">Options</h2><div class="options-list" id="optionsList"></div><button class="button" id="closeOptions" type="button">Close</button></div></div>
 <div class="overlay" id="groupOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="groupTitle"><h2 id="groupTitle">Creator channel</h2><label for="groupPick">Channel</label><select id="groupPick"></select><label for="groupName">Name</label><input class="search" id="groupName" placeholder="TECH NIGHT_" autocomplete="off"><label for="groupSearch">Creators · <span id="groupCount">0 picked</span></label><input class="search" id="groupSearch" placeholder="FILTER_" autocomplete="off"><div class="group-list" id="groupList"></div><p class="mono" id="groupStatus" role="status"></p><div class="detail-actions"><button class="button primary" id="saveGroup" type="button">Make channel</button><button class="button" id="cancelGroup" type="button">Cancel</button><button class="button" id="deleteGroup" type="button" hidden>Delete channel</button></div></div></div>
 <div class="overlay" id="listOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="listTitle"><h2 id="listTitle">New list channel</h2><p>Everything a creator posted on a day (or a stretch of days) that you haven't finished yet. Each video drops off once you've watched 90% of it here.</p><label for="listCreator">Creator</label><input class="search" id="listCreator" list="creatorOptions" placeholder="START TYPING A NAME_" autocomplete="off"><datalist id="creatorOptions"></datalist><label class="check"><input type="checkbox" id="listAuto"> Keep recording new uploads</label><div id="autoOpts" hidden><label for="listKeep">Erase each video after</label><select id="listKeep"><option value="24">24 hours</option><option value="72">3 days</option><option value="168">7 days</option><option value="336">14 days</option></select></div><div id="dayOpts"><label for="listFrom">Posted on</label><input class="search" type="date" id="listFrom"><label for="listTo">Through (optional)</label><input class="search" type="date" id="listTo"></div><label class="check"><input type="checkbox" id="listShorts"> Include Shorts</label><p id="listStatus" class="mono" role="status"></p><div class="detail-actions"><button class="button primary" id="createList" type="button">Make channel</button><button class="button" id="cancelList" type="button">Cancel</button></div></div></div>
-<div class="overlay" id="settingsOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><h2 id="settingsTitle">Cable box setup</h2><label class="check"><input type="checkbox" id="crtToggle" checked> CRT scanlines</label><label class="check"><input type="checkbox" id="staticToggle" checked> Static + click on channel change</label><label for="qualitySelect">Picture</label><select id="qualitySelect"><option value="2160">Sharpest (asks YouTube for up to 4K)</option><option value="1080">HD (up to 1080p)</option><option value="auto">Let YouTube decide</option></select><label class="check"><input type="checkbox" id="preloadToggle" checked> Pre-load channels above and below (turn off if the TV stutters)</label><label class="check"><input type="checkbox" id="tvModeToggle"> TV layout on this device (remote-first, bigger text)</label><label class="check"><input type="checkbox" id="genreToggle" checked> Genre channels (built from YouTube's topic tags)</label><button class="button" id="unhideGenres" type="button">Unhide genre channels</button><label for="vcrAuto">VCR auto-records my top</label><select id="vcrAuto"><option value="0">Nobody (only ● Record)</option><option value="3">3 creators</option><option value="5">5 creators</option><option value="10">10 creators</option></select><h2 style="margin-top:22px">YouTube</h2><p class="mono" id="accountNote"></p><div class="detail-actions"><button class="button" id="disconnect" type="button" hidden>Sign out of YouTube</button></div><h2 style="margin-top:22px">Household sync</h2><p>Your channels, lists, VCR and watched history are shared by every device that turns on sync with the same Google account. It can be a different account from YouTube. Signing out never erases anything on this device.</p><p class="mono" id="syncStatus" role="status"></p><div class="detail-actions"><button class="button" id="syncNow" type="button">Sync now</button><button class="button primary" id="syncConsent" type="button" hidden>Turn on sync</button><button class="button" id="syncSignout" type="button" hidden>Sign out of sync</button></div><h2 style="margin-top:22px">Subscribing</h2><p class="mono" id="manageNote"></p><div class="detail-actions"><button class="button" id="manageSignout" type="button" hidden>Sign out of subscribing</button></div><h2 style="margin-top:22px">Sponsor skipping</h2><p>Jumps past parts of videos that SponsorBlock viewers have marked, with a burst of static. Shared by the whole house.</p><label class="check"><input type="checkbox" id="sbOn"> Skip marked segments</label><div id="sbCats" class="sb-cats"></div><h2 style="margin-top:22px">New creators</h2><p>Channels 010+ show creators you don't subscribe to yet: ones your creators recommend, plus picks matched to your taste. They refresh daily; press → on a channel to say "Not interested" in someone.</p><div class="detail-actions"><button class="button" id="scoutNow" type="button">Find new creators now</button><button class="button" id="shuffleAll" type="button">Shuffle all channels</button></div><h2 style="margin-top:22px">For You channel</h2><p>Mix recent videos from your most opened creators in this guide. YouTube's standard API does not expose watch history.</p><label for="topCount">How many creators in the mix?</label><select id="topCount"><option value="5">Top 5</option><option value="12">Top 12</option><option value="25">Top 25</option><option value="50">Top 50</option></select><p>Favorite a creator to move them toward the front. To use your viewing history, get a YouTube activity JSON export from <a href="https://takeout.google.com/" target="_blank" rel="noopener noreferrer">Google Takeout</a>, then import its <strong>watch-history.json</strong> file here. The file is read locally in this browser and is not uploaded to the guide server.</p><label for="historyFile">Import watch-history.json</label><input id="historyFile" type="file" accept=".json,.md,application/json,text/markdown"><p id="historyImportStatus" role="status">No history file imported.</p><button class="button primary" id="closeSettings" type="button">Done</button></div></div>
+<div class="overlay" id="settingsOverlay" hidden><div class="settings" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><h2 id="settingsTitle">Cable box setup</h2><label class="check"><input type="checkbox" id="crtToggle" checked> CRT scanlines</label><label class="check"><input type="checkbox" id="staticToggle" checked> Static + click on channel change</label><label for="qualitySelect">Picture</label><select id="qualitySelect"><option value="2160">Sharpest (asks YouTube for up to 4K)</option><option value="1080">HD (up to 1080p)</option><option value="auto">Let YouTube decide</option></select><label class="check"><input type="checkbox" id="preloadToggle" checked> Pre-load channels above and below (turn off if the TV stutters)</label><label class="check"><input type="checkbox" id="tvModeToggle"> TV layout on this device (remote-first, bigger text)</label><label class="check"><input type="checkbox" id="genreToggle" checked> Genre channels (built from YouTube's topic tags)</label><button class="button" id="unhideGenres" type="button">Unhide genre channels</button><label for="vcrAuto">VCR auto-records my top</label><select id="vcrAuto"><option value="0">Nobody (only ● Record)</option><option value="3">3 creators</option><option value="5">5 creators</option><option value="10">10 creators</option></select><h2 style="margin-top:22px">YouTube</h2><p class="mono" id="accountNote"></p><div class="detail-actions"><button class="button" id="disconnect" type="button" hidden>Sign out of YouTube</button></div><h2 style="margin-top:22px">Household sync</h2><p>Your channels, lists, VCR and watched history are shared by every device that turns on sync with the same Google account. It can be a different account from YouTube. Signing out never erases anything on this device.</p><p class="mono" id="syncStatus" role="status"></p><div class="detail-actions"><button class="button" id="syncNow" type="button">Sync now</button><button class="button" id="libShare" type="button">Share my videos with the house</button><button class="button primary" id="syncConsent" type="button" hidden>Turn on sync</button><button class="button" id="syncSignout" type="button" hidden>Sign out of sync</button></div><h2 style="margin-top:22px">Subscribing</h2><p class="mono" id="manageNote"></p><div class="detail-actions"><button class="button" id="manageSignout" type="button" hidden>Sign out of subscribing</button></div><h2 style="margin-top:22px">Sponsor skipping</h2><p>Jumps past parts of videos that SponsorBlock viewers have marked, with a burst of static. Shared by the whole house.</p><label class="check"><input type="checkbox" id="sbOn"> Skip marked segments</label><div id="sbCats" class="sb-cats"></div><h2 style="margin-top:22px">New creators</h2><p>Channels 010+ show creators you don't subscribe to yet: ones your creators recommend, plus picks matched to your taste. They refresh daily; press → on a channel to say "Not interested" in someone.</p><div class="detail-actions"><button class="button" id="scoutNow" type="button">Find new creators now</button><button class="button" id="shuffleAll" type="button">Shuffle all channels</button></div><h2 style="margin-top:22px">For You channel</h2><p>Mix recent videos from your most opened creators in this guide. YouTube's standard API does not expose watch history.</p><label for="topCount">How many creators in the mix?</label><select id="topCount"><option value="5">Top 5</option><option value="12">Top 12</option><option value="25">Top 25</option><option value="50">Top 50</option></select><p>Favorite a creator to move them toward the front. To use your viewing history, get a YouTube activity JSON export from <a href="https://takeout.google.com/" target="_blank" rel="noopener noreferrer">Google Takeout</a>, then import its <strong>watch-history.json</strong> file here. The file is read locally in this browser and is not uploaded to the guide server.</p><label for="historyFile">Import watch-history.json</label><input id="historyFile" type="file" accept=".json,.md,application/json,text/markdown"><p id="historyImportStatus" role="status">No history file imported.</p><button class="button primary" id="closeSettings" type="button">Done</button></div></div>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 (() => {
@@ -421,7 +421,7 @@
           return [{...x,duration:len}];
         });
         c.skip=[...new Set([...rejected,...(c.skip||[])])].slice(0,90);
-        c.loaded=true;c.loadedAt=Date.now();saveLineup();vcrCapture(c);
+        c.loaded=true;c.loadedAt=Date.now();saveLineup();vcrCapture(c);libraryNoteLoaded(c);
       }catch(e){c.error=e.message;c.errorAt=Date.now();if(state.token&&!quotaPaused())$('status').textContent=`Could not load ${c.name}: ${e.message}`}
       finally{c.loading=null;scheduleRender()}
     })();
@@ -778,7 +778,7 @@
     youtube:{store:'nostalgiavision-auth-v1',scope:'https://www.googleapis.com/auth/youtube.readonly',title:'Sign in with your phone',
       apply:t=>{state.token=t},done:()=>sync(),revoked:()=>{$('status').textContent='Sign-in was revoked · press Connect'}},
     sync:{store:'nostalgiavision-sync-auth-v1',scope:'https://www.googleapis.com/auth/drive.file',title:'Turn on household sync',
-      apply:t=>{syncToken=t},done:()=>cloudSync(),revoked:()=>{syncState={note:'Sync approval was removed: press "Turn on sync".',at:0,needsConsent:true};renderSyncStatus()}},
+      apply:t=>{syncToken=t},done:()=>{cloudSync();libraryPull()},revoked:()=>{syncState={note:'Sync approval was removed: press "Turn on sync".',at:0,needsConsent:true};renderSyncStatus()}},
     manage:{store:'nostalgiavision-manage-auth-v1',scope:'https://www.googleapis.com/auth/youtube',title:'Allow subscribing from The Tube',
       apply:t=>{manageToken=t},done:()=>{const p=pendingSubscribe;pendingSubscribe=null;if(p)subscribeTo(p.c,p.button)},revoked:()=>{manageToken=null}}};
   let tvConfig=null,deviceFlow=null,syncToken=null,manageToken=null;const renewTimers={};
@@ -839,7 +839,7 @@
   $('manageSignout').onclick=()=>pressTwice($('manageSignout'),()=>forgetSignin(['manage']));
   $('cancelSignin').onclick=closeSignin;
   // On launch: if this device is already signed in, renew quietly and load the guide — no button press needed.
-  loadTvConfig().then(async()=>{if(await renewAccess()){$('status').textContent='Signed in · loading your channels…';sync()}});
+  loadTvConfig().then(async()=>{if(grantSaved('sync'))libraryPull().then(()=>scheduleRender());else if(tvConfig){syncState={note:'Off on this device: press "Turn on sync" and approve the code.',at:0,needsConsent:true};renderSyncStatus()}if(await renewAccess()){$('status').textContent='Signed in · loading your channels…';sync()}});
   // ?ch=020 (or ?ch=for%20you, by name) tunes straight in once that channel has something on — for Home Assistant,
   // voice commands and bookmarks. The parameter is dropped afterwards so a reload doesn't re-tune.
   {const want=(new URLSearchParams(location.search).get('ch')||'').trim().toLowerCase();
@@ -861,7 +861,7 @@
   // per burst instead of once per creator.
   const loadQueue=[];let loadActive=0;
   function ensureFresh(c,maxAge){
-    if(!state.token||!c?.uploadsPlaylist||c.loading||c.queued||quotaPaused())return;
+    if(!state.token||!c?.uploadsPlaylist||c.loading||c.queued||quotaPaused()||libraryWait())return;
     if(document.hidden&&c.videos?.length)return; // screens that are off or in the background don't spend the daily budget
     if(c.loaded&&Date.now()-(c.loadedAt||0)<maxAge)return;if(c.error&&Date.now()-(c.errorAt||0)<5*MINUTE)return;
     c.queued=true;loadQueue.push(c);pumpLoads();
@@ -1129,12 +1129,81 @@
     })();
     return syncing;
   }
+  // ── Shared library: every creator's recent uploads, fetched once for the whole house ──────────────────
+  // A second Drive file ("The Tube – library", tagged theTube=library) holds each creator's recent videos, keyed by
+  // YouTube channel id. Devices read it instead of asking YouTube, so the daily budget is spent once, not once per
+  // device. Whoever does fetch from YouTube (Home Assistant on a schedule, or any device finding an entry stale)
+  // writes what it got back. Format (v1):
+  //   {v:1, at, by, want:{UCid:{name,uploads}}, creators:{UCid:{at, videos:[{id,title,published,duration}], skip:[ids]}}}
+  // `want` is the list of creators the house wants kept fresh (subscriptions + discovery picks), so an outside
+  // writer like Home Assistant knows what to fetch without its own YouTube sign-in.
+  const LIB_FILE='The Tube – library',LIB_STORE='nostalgiavision-library-v1';
+  let libMeta={};try{libMeta=JSON.parse(localStorage.getItem(LIB_STORE)||'{}')}catch{}
+  const saveLibMeta=()=>{try{localStorage.setItem(LIB_STORE,JSON.stringify(libMeta))}catch{}};
+  let library=null,libPulling=null,libFirstPull=Date.now(),libDirty=new Set(),libPushTimer=null;
+  // on a device with sync, hold back YouTube lookups for a few seconds at start-up so the library can arrive first
+  const libraryWait=()=>!library&&!!grantSaved('sync')&&Date.now()-libFirstPull<10*1000;
+  function libraryApply(c){
+    const e=library?.creators?.[c?.youtubeId];if(!e?.videos||(e.at||0)<=(c.loadedAt||0))return false;
+    c.videos=e.videos;c.skip=e.skip||c.skip;c.loaded=true;c.loadedAt=e.at;c.error=null;try{vcrCapture(c)}catch{}return true;
+  }
+  const libraryCreators=()=>[...state.subs,...(typeof discLive!=='undefined'?discLive.values():[])];
+  async function libraryFind(){
+    if(libMeta.fileId)return libMeta.fileId;
+    const list=await (await drive(`${DRIVE}/drive/v3/files?fields=files(id)&orderBy=modifiedTime desc&q=${encodeURIComponent("appProperties has { key='theTube' and value='library' } and trashed=false")}`)).json();
+    libMeta.fileId=list.files?.[0]?.id||null;saveLibMeta();return libMeta.fileId;
+  }
+  async function libraryPull(force){
+    if(libPulling)return libPulling;
+    libPulling=(async()=>{try{
+      if(!syncToken&&!await renewSync())return;
+      const id=await libraryFind();if(!id){library=library||{v:1,creators:{}};return}
+      let meta;try{meta=await (await drive(`${DRIVE}/drive/v3/files/${id}?fields=modifiedTime`)).json()}catch(e){if(e.status===404){libMeta.fileId=null;saveLibMeta();return}throw e}
+      if(!force&&library&&meta.modifiedTime===libMeta.modified)return;
+      library=await (await drive(`${DRIVE}/drive/v3/files/${id}?alt=media`)).json();libMeta.modified=meta.modifiedTime;saveLibMeta();
+      let n=0;for(const c of libraryCreators())if(libraryApply(c))n++;
+      if(n){saveLineup();scheduleRender()}
+      window.nvLog?.(`library: ${Object.keys(library.creators||{}).length} creators, ${n} updated here`);
+    }catch(e){console.warn('library pull',e)}finally{libPulling=null;if(!library)library={v:1,creators:{}}}})();
+    return libPulling;
+  }
+  // after this device fetched creators from YouTube, add them to the shared library (merged, newest entry wins)
+  function libraryNoteLoaded(c){if(!c?.youtubeId||!grantSaved('sync'))return;libDirty.add(c.youtubeId);clearTimeout(libPushTimer);libPushTimer=setTimeout(libraryPush,45*1000)}
+  function libraryWant(){
+    const want={},add=c=>{if(c?.youtubeId&&c.uploadsPlaylist)want[c.youtubeId]={name:c.name,uploads:c.uploadsPlaylist}};
+    state.subs.forEach(add);const d=state.discover;if(d){(d.scouted||[]).forEach(add);Object.values(d.curated||{}).forEach(add)}
+    return want;
+  }
+  async function libraryPush(){
+    try{
+      if(!syncToken&&!await renewSync())return;
+      await libraryPull();
+      const lib=library&&library.creators?library:{v:1,creators:{}},all=new Map(libraryCreators().map(c=>[c.youtubeId,c]));
+      let n=0;for(const yt of libDirty){const c=all.get(yt);if(!c?.loaded||!c.videos)continue;const e=lib.creators[yt];
+        if(!e||(e.at||0)<(c.loadedAt||0)){lib.creators[yt]={at:c.loadedAt,videos:c.videos,skip:c.skip||[]};n++}}
+      libDirty.clear();
+      const want=libraryWant(),wantChanged=JSON.stringify(Object.keys(want).sort())!==JSON.stringify(Object.keys(lib.want||{}).sort());
+      if(!n&&!wantChanged&&libMeta.fileId)return;
+      Object.assign(lib,{v:1,at:Date.now(),by:/Android/i.test(navigator.userAgent)?'tv':'computer',want});library=lib;
+      const body=JSON.stringify(lib);let id=await libraryFind();
+      if(id)await drive(`${DRIVE}/upload/drive/v3/files/${id}?uploadType=media`,{method:'PATCH',headers:{'Content-Type':'application/json'},body});
+      else{const form=new FormData();form.append('metadata',new Blob([JSON.stringify({name:LIB_FILE,mimeType:'application/json',description:'Recent uploads of every creator for The Tube, shared by the whole house (and Home Assistant). Safe to delete; it rebuilds.',appProperties:{theTube:'library'}})],{type:'application/json'}));form.append('file',new Blob([body],{type:'application/json'}));
+        id=(await (await drive(`${DRIVE}/upload/drive/v3/files?uploadType=multipart&fields=id`,{method:'POST',body:form})).json()).id;libMeta.fileId=id}
+      const meta=await (await drive(`${DRIVE}/drive/v3/files/${id}?fields=modifiedTime`)).json();libMeta.modified=meta.modifiedTime;saveLibMeta();
+      window.nvLog?.(`library: wrote ${n} creators (${Object.keys(lib.creators).length} total)`);
+    }catch(e){console.warn('library push',e)}
+  }
+  // seed the library from everything this device already has (used once to build it; also Setup → "Share my videos")
+  function librarySeed(){for(const c of libraryCreators())if(c.loaded&&c.videos?.length&&c.youtubeId)libDirty.add(c.youtubeId);clearTimeout(libPushTimer);return libraryPush()}
+  setInterval(()=>{if(!document.hidden&&grantSaved('sync'))libraryPull()},10*MINUTE);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&grantSaved('sync'))libraryPull()});
   // Local edits sync a few seconds later; other devices' edits arrive every 2 minutes and whenever the screen wakes.
   function scheduleCloudSync(){if(!syncToken)return;clearTimeout(syncTimer);syncTimer=setTimeout(cloudSync,4000)}
   setInterval(()=>{if(!document.hidden)cloudSync()},2*MINUTE);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)cloudSync()});
   function renderSyncStatus(){const ago=syncState.at?` · last synced ${Math.max(0,Math.round((Date.now()-syncState.at)/MINUTE))} min ago`:'';$('syncStatus').textContent=`${syncState.note}${syncState.note==='Synced'?ago:''}`;renderAccounts()}
   $('syncNow').onclick=()=>cloudSync();
+  $('libShare').onclick=()=>{$('libShare').textContent='Sharing…';librarySeed().finally(()=>{$('libShare').textContent='Shared ✓';setTimeout(()=>{$('libShare').textContent='Share my videos with the house'},3000)})};
   $('syncConsent').onclick=()=>{$('settingsOverlay').hidden=true;if(tvConfig)tvSignIn('sync')};
   // ── Discovery: channels of creators you don't subscribe to yet ─────────────────────────────────────────
   // Two sources, refreshed at most once a day and shared through household sync:
@@ -1157,7 +1226,7 @@
   const subscribedIds=()=>new Set(state.subs.map(c=>c.youtubeId));
   // Discovered creators are plain creator objects (same shape as subscriptions), kept alive for the session so their
   // uploads load once and stay loaded.
-  const liveCreator=x=>{let c=discLive.get(x.id);if(!c){c={...x,videos:[],loaded:false,discovered:true};discLive.set(x.id,c)}return c};
+  const liveCreator=x=>{let c=discLive.get(x.id);if(!c){c={...x,videos:[],loaded:false,discovered:true};discLive.set(x.id,c);libraryApply(c)}return c};
   const creatorFrom=ch=>({id:`yt-${ch.id}`,youtubeId:ch.id,name:ch.snippet?.title||'Creator',thumb:ch.snippet?.thumbnails?.medium?.url||ch.snippet?.thumbnails?.default?.url||'',uploadsPlaylist:ch.contentDetails?.relatedPlaylists?.uploads,topics:(ch.topicDetails?.topicCategories||[]).map(u=>decodeURIComponent(u.split('/wiki/')[1]||''))});
   async function runDiscovery(force){
     if(!state.token||discovering||quotaPaused())return discovering;
