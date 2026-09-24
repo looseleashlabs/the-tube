@@ -489,11 +489,14 @@
     const pool=activeDecks().filter(d=>d.i!==onAir),sacrifice=kind==='channel'?'next':'down';
     // On a TV box, starting a second player means setting up the video decoder from scratch (slow there), so a new
     // channel loads into the player that's already on air, behind the static, unless a spare already holds it.
+    // Changing channel on the box: the channel you're leaving keeps playing until the new one is ready (a second player,
+    // slower to start but there's never a blank screen). The next program loads into the on-air player.
+    const behind=LITE&&kind==='channel'&&onAir!==null;
     const ready=pool.find(x=>x.primed&&x.videoId===p.video.id);
-    const d=ready||(LITE&&onAir!==null&&decks[onAir].player?decks[onAir]:null)||pool.find(x=>x.mode==='idle')||pool.find(x=>x.role===sacrifice)||pool.find(x=>x.mode!=='arming')||pool[0];
+    const d=ready||(LITE&&!behind&&onAir!==null&&decks[onAir].player?decks[onAir]:null)||pool.find(x=>x.mode==='idle')||pool.find(x=>x.role===sacrifice)||pool.find(x=>x.mode!=='arming')||pool[0];
     const primed=d.primed&&d.videoId===p.video.id,seq=++tuneSeq;d.seq=seq;d.wasPrimed=primed;
-    if(kind==='channel'&&onAir!==null)decks[onAir].player?.mute();
-    emit('nv:tuning',{kind,primed});
+    if(kind==='channel'&&onAir!==null&&!behind)decks[onAir].player?.mute();
+    emit('nv:tuning',{kind,primed,behind});
     await deckPlayer(d);if($('watchOverlay').hidden||d.seq!==seq)return;
     clearTimeout(d.armTimer);clearTimeout(preloadTimer);d.player.mute();d.mode='arming';d.role=null;d.armedAt=Date.now();
     if(LITE){clearTimeout(stepUpTimer);quickStart=true;fitDecks()}
@@ -1264,8 +1267,9 @@
   function zap(){if(!prefs.static)return;staticUntil=performance.now()+420;canvas.classList.add('show');if(!drawing)drawStatic();hiss(380)}
   // The player announces tuning / on-air: channel changes hold the static until the new channel is really playing,
   // program changes that weren't pre-rolled get a "stay tuned" card instead of YouTube's loading spinner.
-  document.addEventListener('nv:tuning',e=>{if(e.detail?.kind==='channel'){holdStatic=true;$('videoBox').classList.add('tuning');zap()}else if(!e.detail?.primed){clearTimeout(bumperTimer);bumperTimer=setTimeout(()=>{$('videoBox').classList.add('tuning');$('bumperTitle').textContent=$('watchTitle').textContent;$('bumper').classList.add('show')},200)}});
-  document.addEventListener('nv:onair',()=>{holdStatic=false;staticUntil=0;$('videoBox').classList.remove('tuning');clearTimeout(bumperTimer);$('bumper').classList.remove('show')});
+  let cutPending=false;
+  document.addEventListener('nv:tuning',e=>{if(e.detail?.behind){cutPending=true;showBanner();return}if(e.detail?.kind==='channel'){holdStatic=true;$('videoBox').classList.add('tuning');zap()}else if(!e.detail?.primed){clearTimeout(bumperTimer);bumperTimer=setTimeout(()=>{$('videoBox').classList.add('tuning');$('bumperTitle').textContent=$('watchTitle').textContent;$('bumper').classList.add('show')},200)}});
+  document.addEventListener('nv:onair',()=>{holdStatic=false;staticUntil=0;$('videoBox').classList.remove('tuning');clearTimeout(bumperTimer);$('bumper').classList.remove('show');if(cutPending){cutPending=false;zap()}});
 
   // OSD + info banner, like a cable box
   let osdTimer=null,bannerTimer=null,lastChannel='';
