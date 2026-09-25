@@ -1456,7 +1456,14 @@
   let osdTimer=null,bannerTimer=null,lastChannel='';
   function showBanner(){$('banner').classList.remove('tucked');$('watchPanel').classList.add('squeeze');clearTimeout(bannerTimer);bannerTimer=setTimeout(tuckBanner,5000)}
   function tuner(on){let t=document.getElementById('tuner');if(!t&&on){t=document.createElement('div');t.id='tuner';t.setAttribute('aria-hidden','true');t.innerHTML='<div class="set"><div class="ears"><i></i><i></i></div><div class="screen"></div></div><b>TUNING IN…</b>';$('watchPanel').append(t)}t?.classList.toggle('show',!!on)}
-  function tuckBanner(){if(cutPending){bannerTimer=setTimeout(tuckBanner,1000);return}if($('banner').contains(document.activeElement)){bannerTimer=setTimeout(tuckBanner,2000);return}$('banner').classList.add('tucked');$('watchPanel').classList.remove('squeeze');$('osd').classList.remove('show')}
+  let bannerKeyAt=0,bannerPointerAt=0;
+  $('banner').addEventListener('keydown',()=>{bannerKeyAt=Date.now()});
+  $('banner').addEventListener('pointerup',()=>{bannerPointerAt=Date.now();setTimeout(()=>{if($('banner').contains(document.activeElement))$('watchPanel').focus({preventScroll:true})},0)});
+  function tuckBanner(){if(cutPending){bannerTimer=setTimeout(tuckBanner,1000);return}
+    // stay up while the pointer is on it or it's being used from the keyboard/remote; a mouse click leaves focus
+    // behind, so after a click the focus goes back to the show instead of pinning the banner open
+    const b=$('banner'),a=document.activeElement;if(b.matches(':hover')||(b.contains(a)&&bannerKeyAt>bannerPointerAt)){bannerTimer=setTimeout(tuckBanner,2000);return}
+    if(b.contains(a))$('watchPanel').focus({preventScroll:true});$('banner').classList.add('tucked');$('watchPanel').classList.remove('squeeze');$('osd').classList.remove('show')}
   function onTune(){
     if($('watchOverlay').hidden){lastChannel='';return}
     const label=$('watchChannel').textContent,m=label.match(/CH\s+(\d+)\s*·\s*(.*)/);
