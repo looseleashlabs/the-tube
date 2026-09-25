@@ -265,6 +265,7 @@
 .tv-mode .remote-legend b{color:#f5d000;margin:0 4px 0 18px;font-weight:400}
 .tv-mode #tuner.show{transform:translate(-50%,-50%) scale(.6)}
 .sb-cats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px;margin-left:26px}
+.watch-posted{margin-right:auto;font-family:'VT323',monospace;font-size:22px;color:var(--cyan);white-space:nowrap;opacity:.9}
 </style>
 </head>
 <body>
@@ -304,7 +305,7 @@
   <div class="osd" id="osd"></div>
   <div class="browse-bar" id="browseBar" aria-live="polite"></div>
   <div class="banner" id="banner">
-    <div class="watch-head"><strong id="watchChannel">CHANNEL 001</strong><small id="watchLive">JOINING THE PROGRAM IN PROGRESS</small></div>
+    <div class="watch-head"><strong id="watchChannel">CHANNEL 001</strong><span class="watch-posted" id="watchPosted"></span><small id="watchLive">JOINING THE PROGRAM IN PROGRESS</small></div>
     <div class="watch-controls"><span class="watch-title" id="watchTitle">Loading program…</span><button class="button" id="browseButton" type="button">What else is on</button><button class="button" id="prevChannel" type="button">◀ CH</button><button class="button" id="nextProgram" type="button">Next program</button><button class="button" id="nextChannel" type="button">CH ▶</button><button class="button primary" id="back" type="button" hidden>Guide</button><span class="watch-message" id="watchMessage">YouTube playback remains in its official player.</span><span class="remote-legend" aria-hidden="true"><b>▲▼</b> channel <b>◀▶</b> 10 sec <b>OK</b> pause <b>HOLD OK</b> what's on <b>BACK</b> guide</span></div>
   </div>
 </div></div>
@@ -470,7 +471,7 @@
     }catch(e){$('status').textContent=`Sync failed: ${e.message}`}
   }
   function connect(){if(location.protocol==='file:'){$('fileWarning').hidden=false;return}if(!window.google?.accounts?.oauth2){$('status').textContent='Google sign-in is loading. Try again.';return}try{const client=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:'https://www.googleapis.com/auth/youtube.readonly',callback:r=>{if(r.error){$('status').textContent=`Sign-in failed: ${r.error}`;return}state.token=r.access_token;sync()}});client.requestAccessToken({prompt:''})}catch(e){$('status').textContent=`Could not sign in: ${e.message}`}}
-  function watchLabel(c,p){$('watchChannel').textContent=`CH ${channelNo(c)} · ${c.name}`;$('watchTitle').textContent=p.video.title;$('watchLive').textContent=c.onDemand&&p.offset>3?`RESUMING AT ${Math.floor(p.offset/60)}:${String(Math.floor(p.offset%60)).padStart(2,'0')}`:p.offset>3?`JOINED ${Math.floor(p.offset/60)} MIN INTO PROGRAM`:'LIVE FROM PROGRAM START';$('watchMessage').textContent=[p.video.creator&&`From ${p.video.creator}`,postedLabel(p.video.published)].filter(Boolean).join(' · ')||'Official YouTube player'}
+  function watchLabel(c,p){$('watchChannel').textContent=`CH ${channelNo(c)} · ${c.name}`;$('watchTitle').textContent=p.video.title;$('watchLive').textContent=c.onDemand&&p.offset>3?`RESUMING AT ${Math.floor(p.offset/60)}:${String(Math.floor(p.offset%60)).padStart(2,'0')}`:p.offset>3?`JOINED ${Math.floor(p.offset/60)} MIN INTO PROGRAM`:'LIVE FROM PROGRAM START';$('watchMessage').textContent=p.video.creator?`From ${p.video.creator}`:'Official YouTube player';$('watchPosted').textContent=postedLabel(p.video.published)}
   // "Posted Sep 22 · 3 days ago" (the year only when it isn't this year)
   function postedLabel(ms){if(!ms)return '';const d=new Date(ms),now=new Date(),days=Math.floor((new Date(now.toDateString())-new Date(d.toDateString()))/86400000);
     const date=d.toLocaleDateString([],{month:'short',day:'numeric',...(d.getFullYear()!==now.getFullYear()?{year:'numeric'}:{})});
