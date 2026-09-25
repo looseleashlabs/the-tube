@@ -604,7 +604,7 @@
       break;
     }
   }
-  if(/[?&]debug/.test(location.search))window.nvOnAir=()=>{const d=decks[onAir];return d?.player&&{id:d.videoId,t:d.player.getCurrentTime(),vol:d.player.getVolume?.(),muted:d.player.isMuted?.(),seek:x=>d.player.seekTo(x,true)}};
+  if(/[?&]debug/.test(location.search))window.nvOnAir=()=>{const d=decks[onAir];return d?.player&&{id:d.videoId,t:d.player.getCurrentTime(),vol:d.player.getVolume?.(),dur:d.player.getDuration?.(),muted:d.player.isMuted?.(),seek:x=>d.player.seekTo(x,true)}};
   // ── Volume: remembered per device and carried from show to show ──────────────────────────────────────
   // YouTube starts every new video at its own level, which made episode changes jump. The Tube keeps one level,
   // sets it on each show, and notices when it's changed from YouTube's own slider.
