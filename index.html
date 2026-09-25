@@ -442,16 +442,21 @@
   }
   // Refresh the lineup from YouTube. Creators already on screen (from the saved lineup) keep their schedules while
   // this runs, so the guide never goes blank; only what changed gets fetched.
-  async function sync(){
+  // Re-reading ~900 subscriptions costs ~19 YouTube units, so a reload reuses the list for 6 hours; the Refresh guide
+  // button always re-reads it.
+  const SUBS_STORE='nostalgiavision-subs-at',SUBS_FRESH=6*HOUR;
+  async function sync(force){
     if(!state.token)return;if(quotaPaused()){pauseQuota();$('connect').textContent='Refresh guide';$('disconnect').hidden=false;cloudSync();return}
     $('status').textContent=state.subs.length?`${state.subs.length} creators · checking for changes…`:'Reading subscriptions…';
     try{
-      const known=new Map(state.subs.map(c=>[c.id,c])),found=[];let page,pages=0;
-      do{
+      let subsAt=0;try{subsAt=Number(localStorage.getItem(SUBS_STORE))||0}catch{}
+      const reuse=!force&&state.subs.length>0&&Date.now()-subsAt<SUBS_FRESH;
+      const known=new Map(state.subs.map(c=>[c.id,c])),found=reuse?state.subs.slice():[];let page,pages=0;
+      if(!reuse){do{
         const j=await api('subscriptions',{part:'snippet',mine:'true',maxResults:50,pageToken:page});
         for(const x of j.items||[]){const id=x.snippet?.resourceId?.channelId;if(!id)continue;const c=known.get(`yt-${id}`)||{id:`yt-${id}`,youtubeId:id,videos:[],loaded:false};c.name=x.snippet?.title||c.name||'Creator';found.push(c)}
         page=j.nextPageToken;pages++;
-      }while(page&&pages<40);
+      }while(page&&pages<40);try{localStorage.setItem(SUBS_STORE,String(Date.now()))}catch{}}
       if(state.synced)state.mixCache=null; // pressing Refresh guide reprints today's For You
       const hadNone=!state.subs.length;state.subs=found;
       if(hadNone){state.selectedId='for-you';state.query='';$('search').value=''}
@@ -840,7 +845,7 @@
     $('manageNote').textContent=on('manage')?'This device can subscribe to creators for you.':'Off on this device. It asks the first time you press Subscribe.';
   }
   {const popupConnect=$('connect').onclick,baseDisconnect=$('disconnect').onclick;
-    $('connect').onclick=()=>state.token?sync():tvConfig?tvSignIn():popupConnect();
+    $('connect').onclick=()=>state.token?sync(true):tvConfig?tvSignIn():popupConnect();
     $('disconnect').onclick=()=>pressTwice($('disconnect'),()=>{forgetSignin(['youtube']);baseDisconnect()});}
   // Signing out of sync also forgets which Drive file this device used, so signing back in with another account
   // starts (or joins) that account's file, filled from what's on this device.
