@@ -422,7 +422,11 @@
         });
         c.skip=[...new Set([...rejected,...(c.skip||[])])].slice(0,90);
         c.loaded=true;c.loadedAt=Date.now();saveLineup();vcrCapture(c);libraryNoteLoaded(c);
-      }catch(e){c.error=e.message;c.errorAt=Date.now();if(state.token&&!quotaPaused())$('status').textContent=`Could not load ${c.name}: ${e.message}`}
+      }catch(e){
+        // a channel with no public uploads (deleted, hidden, or emptied): nothing to show, quietly — and recorded in
+        // the shared library so no other device keeps asking YouTube about it
+        if(/cannot be found|playlistNotFound/i.test(e.message)){c.videos=[];c.skip=c.skip||[];c.loaded=true;c.loadedAt=Date.now();c.error=null;saveLineup();libraryNoteLoaded(c)}
+        else{c.error=e.message;c.errorAt=Date.now();if(state.token&&!quotaPaused())$('status').textContent=`Could not load ${c.name}: ${e.message}`}}
       finally{c.loading=null;scheduleRender()}
     })();
     return c.loading;
